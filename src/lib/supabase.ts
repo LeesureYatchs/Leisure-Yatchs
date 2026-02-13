@@ -83,3 +83,9 @@ export interface Amenity {
   name: string;
   created_at: string;
 }
+
+export interface YachtCategory {
+  id: string;
+  name: string;
+  created_at: string;
+}

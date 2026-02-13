@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, Yacht, Amenity, RecreationExtra, TripItinerary } from '@/lib/supabase';
+import { supabase, Yacht, Amenity, RecreationExtra, TripItinerary, YachtCategory } from '@/lib/supabase';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -72,6 +72,7 @@ export default function AdminYachts() {
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [recreationExtras, setRecreationExtras] = useState<RecreationExtra[]>([]);
   const [tripItineraries, setTripItineraries] = useState<TripItinerary[]>([]);
+  const [yachtCategories, setYachtCategories] = useState<YachtCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingYacht, setEditingYacht] = useState<Yacht | null>(null);
@@ -79,8 +80,11 @@ export default function AdminYachts() {
   const [submitting, setSubmitting] = useState(false);
   const [newAmenity, setNewAmenity] = useState('');
   const [newRecreationExtra, setNewRecreationExtra] = useState('');
+  const [newCategory, setNewCategory] = useState('');
   const [addingAmenity, setAddingAmenity] = useState(false);
   const [addingRecreationExtra, setAddingRecreationExtra] = useState(false);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -88,6 +92,7 @@ export default function AdminYachts() {
     fetchAmenities();
     fetchRecreationExtras();
     fetchTripItineraries();
+    fetchYachtCategories();
 
     // Enable Realtime Subscriptions
     const channel = supabase
@@ -111,6 +116,11 @@ export default function AdminYachts() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'trip_itineraries' },
         () => fetchTripItineraries()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'yacht_categories' },
+        () => fetchYachtCategories()
       )
       .subscribe();
 
@@ -168,6 +178,24 @@ export default function AdminYachts() {
       console.error('Error fetching trip itineraries:', error);
       toast({
         title: 'Error fetching trip itineraries',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const fetchYachtCategories = async () => {
+    try {
+      const { data, error } = await (supabase
+        .from('yacht_categories' as any)
+        .select('*')
+        .order('name')) as any;
+      
+      if (error) throw error;
+      setYachtCategories(data as YachtCategory[] || []);
+    } catch (error) {
+      console.error('Error fetching yacht categories:', error);
+      toast({
+        title: 'Error fetching yacht categories',
         variant: 'destructive',
       });
     }
@@ -267,6 +295,33 @@ export default function AdminYachts() {
       });
     } finally {
       setAddingRecreationExtra(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
+    setAddingCategory(true);
+    try {
+      const { data, error } = await (supabase
+        .from('yacht_categories' as any)
+        .insert({ name: newCategory.trim() })
+        .select()
+        .single()) as any;
+
+      if (error) throw error;
+
+      setYachtCategories([...yachtCategories, data as YachtCategory]);
+      setNewCategory('');
+      toast({ title: 'Category added successfully' });
+    } catch (error) {
+      console.error('Error adding category:', error);
+      toast({
+        title: 'Error adding category',
+        description: 'It might already exist.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAddingCategory(false);
     }
   };
 
@@ -489,7 +544,7 @@ export default function AdminYachts() {
                           required
                         />
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="hourly_price">Hourly Price (AED)</Label>
                           <Input
@@ -527,24 +582,90 @@ export default function AdminYachts() {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div>
-                          <Label>Category</Label>
-                          <Select
-                            value={formData.category}
-                            onValueChange={(value) =>
-                              setFormData({ ...formData, category: value })
-                            }
+                      </div>
+                      
+                      {/* Category Row */}
+                      <div>
+                        <Label>Category</Label>
+                        <div className="flex gap-2 mt-1.5">
+                          <div className="flex-1">
+                            <Select
+                              value={formData.category}
+                              onValueChange={(value) =>
+                                setFormData({ ...formData, category: value })
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {yachtCategories.map((category) => (
+                                  <SelectItem key={category.id} value={category.name}>
+                                    {category.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button 
+                            type="button" 
+                            size="icon"
+                            variant="outline"
+                            onClick={() => setShowAddCategory(!showAddCategory)}
+                            title="Add new category"
                           >
-                            <SelectTrigger className="mt-1.5">
-                              <SelectValue placeholder="Select Category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Luxury">Luxury</SelectItem>
-                              <SelectItem value="Premium">Premium</SelectItem>
-                              <SelectItem value="Super">Super</SelectItem>
-                            </SelectContent>
-                          </Select>
+                            <Plus className="w-4 h-4" />
+                          </Button>
                         </div>
+                        
+                        {/* Inline Add Category Input */}
+                        {showAddCategory && (
+                          <div className="flex gap-2 mt-2">
+                            <Input 
+                              placeholder="Enter new category name" 
+                              className="flex-1" 
+                              value={newCategory}
+                              onChange={(e) => setNewCategory(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddCategory();
+                                }
+                                if (e.key === 'Escape') {
+                                  setShowAddCategory(false);
+                                  setNewCategory('');
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <Button 
+                              type="button" 
+                              size="sm"
+                              onClick={() => {
+                                handleAddCategory();
+                                setShowAddCategory(false);
+                              }}
+                              disabled={addingCategory || !newCategory.trim()}
+                            >
+                              {addingCategory ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                'Add'
+                              )}
+                            </Button>
+                            <Button 
+                              type="button" 
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setShowAddCategory(false);
+                                setNewCategory('');
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div>
