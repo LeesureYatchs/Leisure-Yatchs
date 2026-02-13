@@ -38,15 +38,16 @@ interface BookingFormProps {
   hourlyPrice: number;
   originalPrice?: number;
   maxCapacity: number;
+  minimumHours: number;
   onCancel: () => void;
 }
 
-export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, maxCapacity, onCancel }: BookingFormProps) {
+export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, maxCapacity, minimumHours, onCancel }: BookingFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState<'check' | 'form' | 'success'>('check');
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>();
-  const [durationHours, setDurationHours] = useState(1);
+  const [durationHours, setDurationHours] = useState(minimumHours);
   const [startTime, setStartTime] = useState('10:00');
   const [formData, setFormData] = useState({
     name: '',
@@ -201,19 +202,42 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
             customer_email: formData.email,
             customer_phone: formData.phone,
             yacht_name: yachtName,
-            booking_date: format(date, 'yyyy-MM-dd'),
+            booking_date: format(date, 'PPP'),
             start_time: startTime,
             end_time: endTime,
             duration_hours: durationHours,
             guests: formData.guests,
             total_amount: totalAmount,
             event_type: formData.eventType,
-            message: formData.message || 'No special requests',
+            message: formData.message || 'No additional message',
           },
           import.meta.env.VITE_EMAILJS_PUBLIC_KEY
         );
       } catch (adminEmailError) {
         console.error('Failed to send admin email:', adminEmailError);
+      }
+
+      // Send email notification to Customer
+      try {
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_CUSTOMER_TEMPLATE_ID, // Customer Template
+          {
+            to_email: formData.email,
+            customer_name: formData.name,
+            yacht_name: yachtName,
+            booking_date: format(date, 'PPP'),
+            start_time: startTime,
+            end_time: endTime,
+            duration_hours: durationHours,
+            total_amount: totalAmount,
+            guests: formData.guests,
+            event_type: formData.eventType,
+          },
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        );
+      } catch (emailError) {
+        console.error('Failed to send customer email:', emailError);
       }
 
       toast({
@@ -244,9 +268,9 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">
+        <h3 className="text-lg font-semibold">
           {step === 'check' ? 'Check Availability' : 'Complete Booking'}
         </h3>
         <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
@@ -303,7 +327,7 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                {Array.from({ length: 12 - minimumHours + 1 }, (_, i) => i + minimumHours).map((h) => (
                   <SelectItem key={h} value={String(h)}>{h} {h === 1 ? 'hour' : 'hours'}</SelectItem>
                 ))}
               </SelectContent>

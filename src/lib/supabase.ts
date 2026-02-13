@@ -10,6 +10,7 @@ export interface Yacht {
   capacity: number;
   cabins: number;
   hourly_price: number;
+  minimum_hours: number;
   description: string | null;
   amenities: string[];
   tour_details: string | null;

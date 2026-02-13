@@ -539,6 +539,7 @@ export default function YachtDetailPage() {
                       }
                       originalPrice={offer ? yacht.hourly_price : undefined}
                       maxCapacity={yacht.capacity}
+                      minimumHours={yacht.minimum_hours || 2}
                       onCancel={() => setShowBookingForm(false)}
                     />
                   ) : (

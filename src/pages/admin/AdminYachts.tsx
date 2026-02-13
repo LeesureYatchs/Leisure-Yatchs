@@ -36,6 +36,7 @@ interface YachtFormData {
   capacity: number;
   cabins: number;
   hourly_price: number;
+  minimum_hours: number;
   description: string;
   amenities: string[];
   recreation_extras: string[];
@@ -53,6 +54,7 @@ const defaultFormData: YachtFormData = {
   capacity: 10,
   cabins: 2,
   hourly_price: 500,
+  minimum_hours: 2,
   description: '',
   amenities: [],
   recreation_extras: [],
@@ -196,6 +198,7 @@ export default function AdminYachts() {
         capacity: yacht.capacity,
         cabins: yacht.cabins,
         hourly_price: yacht.hourly_price,
+        minimum_hours: yacht.minimum_hours || 2,
         description: yacht.description || '',
         amenities: yacht.amenities || [],
         recreation_extras: yacht.recreation_extras || [],
@@ -278,6 +281,7 @@ export default function AdminYachts() {
         capacity: formData.capacity,
         cabins: formData.cabins,
         hourly_price: formData.hourly_price,
+        minimum_hours: formData.minimum_hours,
         description: formData.description || null,
         amenities: formData.amenities,
         recreation_extras: formData.recreation_extras,
@@ -485,7 +489,7 @@ export default function AdminYachts() {
                           required
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-3 gap-4">
                         <div>
                           <Label htmlFor="hourly_price">Hourly Price (AED)</Label>
                           <Input
@@ -501,6 +505,27 @@ export default function AdminYachts() {
                             className="mt-1.5"
                             required
                           />
+                        </div>
+                        <div>
+                          <Label>Minimum Hours</Label>
+                          <Select
+                            value={formData.minimum_hours.toString()}
+                            onValueChange={(value) =>
+                              setFormData({ ...formData, minimum_hours: Number(value) })
+                            }
+                          >
+                            <SelectTrigger className="mt-1.5">
+                              <SelectValue placeholder="Select Hours" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="2">2 Hours</SelectItem>
+                              <SelectItem value="3">3 Hours</SelectItem>
+                              <SelectItem value="4">4 Hours</SelectItem>
+                              <SelectItem value="5">5 Hours</SelectItem>
+                              <SelectItem value="6">6 Hours</SelectItem>
+                              <SelectItem value="7">7 Hours</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div>
                           <Label>Category</Label>
