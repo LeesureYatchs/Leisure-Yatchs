@@ -32,36 +32,47 @@ export default function YachtDetailPage() {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [relatedYachts, setRelatedYachts] = useState<Yacht[]>([]);
 
+  /* 
+   * Helper to check if a string is a valid UUID 
+   */
+  const isUUID = (str: string) => {
+    const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return regex.test(str);
+  };
+
   useEffect(() => {
     if (id) {
       fetchYachtDetails();
-
-      // Enable Realtime Subscriptions for yacht detail
-      const channel = supabase
-        .channel(`yacht-detail-realtime-${id}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'yachts', filter: `id=eq.${id}` },
-          () => fetchYachtDetails()
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'offers', filter: `yacht_id=eq.${id}` },
-          () => fetchYachtDetails()
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'trip_itineraries' },
-          () => fetchYachtDetails()
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     }
   }, [id]);
 
+  useEffect(() => {
+    if (!yacht?.id) return;
+
+    // Enable Realtime Subscriptions for yacht detail using the resolved ID
+    const channel = supabase
+      .channel(`yacht-detail-realtime-${yacht.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'yachts', filter: `id=eq.${yacht.id}` },
+        () => fetchYachtDetails()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'offers', filter: `yacht_id=eq.${yacht.id}` },
+        () => fetchYachtDetails()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'trip_itineraries' },
+        () => fetchYachtDetails()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [yacht?.id]);
   useEffect(() => {
     if (yacht?.category) {
       fetchRelatedYachts(yacht.category, yacht.id);
@@ -88,15 +99,22 @@ export default function YachtDetailPage() {
       console.error('Error fetching itineraries:', error);
     }
   };
-
   const fetchYachtDetails = async () => {
+    if (!id) return;
+    
     try {
-      const { data: yachtData, error: yachtError } = await supabase
-        .from('yachts')
-        .select('*, trip_itinerary_ids') // Ensure trip_itinerary_ids is selected
-        .eq('id', id)
-        .eq('status', 'active')
-        .maybeSingle();
+      setLoading(true); // Ensure loading state is true when fetching starts
+      
+      let query = supabase.from('yachts').select('*, trip_itinerary_ids');
+      
+      if (isUUID(id)) {
+        query = query.eq('id', id);
+      } else {
+        // Assume it's a name, decode it just in case although useParams usually decodes
+        query = query.eq('name', decodeURIComponent(id));
+      }
+
+      const { data: yachtData, error: yachtError } = await query.eq('status', 'active').maybeSingle();
 
       if (yachtError) throw yachtError;
       setYacht(yachtData as Yacht | null);
@@ -104,10 +122,12 @@ export default function YachtDetailPage() {
       if (yachtData) {
         document.title = `${yachtData.name} | Luxury Yacht Rental Dubai | LeisureYatchs`;
         const today = new Date().toISOString().split('T')[0];
+        
+        // Fetch offer using the RESOLVED yacht ID, not the URL param
         const { data: offerData, error: offerError } = await supabase
           .from('offers')
           .select('*')
-          .eq('yacht_id', id)
+          .eq('yacht_id', yachtData.id)
           .eq('status', 'active')
           .lte('start_date', today)
           .gte('end_date', today)

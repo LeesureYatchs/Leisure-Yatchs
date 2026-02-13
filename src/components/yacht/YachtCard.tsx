@@ -123,7 +123,7 @@ export function YachtCard({ yacht }: YachtCardProps) {
               )}
             </div>
             <Button asChild variant="default" size="sm" className="rounded-full shadow-md hover:shadow-lg transition-all group/btn">
-              <Link to={`/yachts/${yacht.id}`} className="flex items-center gap-2">
+              <Link to={`/yachts/${encodeURIComponent(yacht.name)}`} className="flex items-center gap-2">
                 <span className="text-xs font-bold">Details</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
               </Link>

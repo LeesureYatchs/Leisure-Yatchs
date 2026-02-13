@@ -111,7 +111,7 @@ export function OffersSection() {
                   </p>
                 )}
                 <Button asChild variant="outline" size="sm" className="w-full group">
-                  <Link to={offer.yacht ? `/yachts/${offer.yacht.id}` : '/yachts'}>
+                  <Link to={offer.yacht ? `/yachts/${encodeURIComponent(offer.yacht.name)}` : '/yachts'}>
                     View Offer
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
