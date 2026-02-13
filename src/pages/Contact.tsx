@@ -226,7 +226,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Working Hours</h3>
                     <p className="text-muted-foreground">
-                      Daily: 8:00 AM - 10:00 PM<br />
+                      Daily: 6:00 AM - 1:00 AM<br />
                       Charters: 24/7 Available
                     </p>
                   </div>
