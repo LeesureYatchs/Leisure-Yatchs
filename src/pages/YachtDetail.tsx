@@ -7,6 +7,16 @@ import { YachtCard } from '@/components/yacht/YachtCard';
 import { CruiseRoutes } from '@/components/yacht/CruiseRoutes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+} from '@/components/ui/breadcrumb';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WeatherWidget } from '@/components/yacht/WeatherWidget';
 import {
@@ -20,6 +30,7 @@ import {
   Tag,
   Ship,
   Clock,
+  Play,
 } from 'lucide-react';
 
 export default function YachtDetailPage() {
@@ -29,6 +40,7 @@ export default function YachtDetailPage() {
   const [itineraries, setItineraries] = useState<TripItinerary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [relatedYachts, setRelatedYachts] = useState<Yacht[]>([]);
 
@@ -200,40 +212,125 @@ export default function YachtDetailPage() {
       <section className="bg-ocean-light pb-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col gap-4">
-            <div className="w-full aspect-[16/10] lg:aspect-[16/9] rounded-2xl overflow-hidden shadow-sm">
+            <div className="w-full aspect-[16/10] lg:aspect-[16/9] rounded-2xl overflow-hidden shadow-sm bg-black">
               {loading ? (
                 <Skeleton className="w-full h-full" />
               ) : (
-                <img
-                  src={images[selectedImage]}
-                  alt={yacht?.name}
-                  className="w-full h-full object-cover"
-                />
+                (() => {
+                  const currentMedia = [...images, ...(yacht?.videos || [])][selectedImage];
+                  const isVideo = yacht?.videos?.includes(currentMedia);
+                  
+                  if (isVideo) {
+                    return (
+                      <div 
+                        className="w-full h-full relative group cursor-pointer"
+                        onClick={() => setIsVideoModalOpen(true)}
+                      >
+                         {/* Video Thumbnail Placeholder (using yacht image as bg if available or black) */}
+                         <div className="absolute inset-0 bg-black flex items-center justify-center">
+                            <Play className="w-20 h-20 text-white opacity-80 group-hover:scale-110 transition-transform" />
+                         </div>
+                         {/* Use the first image as a background if available for better aesthetics */}
+                         {images[0] && (
+                           <img 
+                              src={images[0]} 
+                              className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" 
+                              alt="Video Background"
+                           />
+                         )}
+                         <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                              <Play className="w-10 h-10 text-white fill-current ml-1" />
+                            </div>
+                         </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <img
+                      src={currentMedia}
+                      alt={yacht?.name}
+                      className="w-full h-full object-cover"
+                    />
+                  );
+                })()
               )}
             </div>
+
+            {/* Video Modal */}
+            <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
+              <DialogContent className="w-auto h-auto max-w-[95vw] max-h-[95vh] p-0 bg-transparent border-none shadow-none flex items-center justify-center focus:outline-none">
+                 {(() => {
+                    const currentMedia = [...images, ...(yacht?.videos || [])][selectedImage];
+                    const isVideo = yacht?.videos?.includes(currentMedia);
+                    
+                    if (isVideo) {
+                       if (currentMedia.includes('youtube') || currentMedia.includes('youtu.be')) {
+                           const embedUrl = currentMedia.includes('watch?v=') 
+                            ? currentMedia.replace('watch?v=', 'embed/') 
+                            : currentMedia;
+                            return (
+                              <iframe
+                                key={currentMedia}
+                                src={`${embedUrl}?autoplay=1`}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title="Yacht Video"
+                              />
+                            );
+                       }
+                       return (
+                          <video 
+                            key={currentMedia}
+                            controls 
+                            autoPlay
+                            controlsList="nodownload"
+                            onContextMenu={(e) => e.preventDefault()}
+                            className="w-full h-full object-contain"
+                          >
+                            <source src={currentMedia} />
+                            Your browser does not support the video tag.
+                          </video>
+                       );
+                    }
+                    return null;
+                 })()}
+              </DialogContent>
+            </Dialog>
             <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-xl" />
                 ))
               ) : (
-                images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden border-2 transition-all snap-start ${
-                      selectedImage === index
-                        ? 'border-primary ring-2 ring-primary/20'
-                        : 'border-transparent hover:border-primary/50 opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`${yacht?.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))
+                [...images, ...(yacht?.videos || [])].map((media, index) => {
+                  const isVideo = yacht?.videos?.includes(media);
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden border-2 transition-all snap-start relative ${
+                        selectedImage === index
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-transparent hover:border-primary/50 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      {isVideo ? (
+                        <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                          <Play className="w-8 h-8 text-white opacity-80" />
+                        </div>
+                      ) : (
+                        <img
+                          src={media}
+                          alt={`${yacht?.name} ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </button>
+                  );
+                })
               )}
             </div>
           </div>
