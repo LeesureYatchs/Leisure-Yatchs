@@ -1,0 +1,96 @@
+@import url('@fontsource/poppins/300.css');
+@import url('@fontsource/poppins/400.css');
+@import url('@fontsource/poppins/500.css');
+@import url('@fontsource/poppins/600.css');
+@import url('@fontsource/poppins/700.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 200 20% 98%;
+    --foreground: 200 50% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 200 50% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 50% 10%;
+
+    --primary: 195 85% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 195 40% 92%;
+    --secondary-foreground: 195 85% 25%;
+
+    --muted: 200 20% 95%;
+    --muted-foreground: 200 20% 40%;
+
+    --accent: 175 60% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 20% 88%;
+    --input: 200 20% 88%;
+    --ring: 195 85% 35%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 200 50% 10%;
+    --sidebar-primary: 195 85% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 195 40% 92%;
+    --sidebar-accent-foreground: 195 85% 25%;
+    --sidebar-border: 200 20% 88%;
+    --sidebar-ring: 195 85% 35%;
+
+    /* Custom ocean theme colors */
+    --ocean-light: 195 70% 95%;
+    --ocean-medium: 195 60% 85%;
+    --ocean-deep: 195 85% 35%;
+    --aqua: 175 60% 45%;
+    --teal: 180 50% 35%;
+    --gold: 45 90% 55%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans cursor-default select-none;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  input, textarea {
+    @apply cursor-text select-text;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    @apply font-semibold;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-md;
+  }
+
+  .ocean-gradient {
+    background: linear-gradient(135deg, hsl(195 70% 95%) 0%, hsl(195 60% 85%) 50%, hsl(175 60% 90%) 100%);
+  }
+
+  .hero-overlay {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%);
+  }
+}

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { 
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+      line-height: 1.6; 
+      color: #333; 
+      background-color: #f4f4f4; 
+      margin: 0; 
+      padding: 0; 
+    }
+    .container { 
+      max-width: 600px; 
+      margin: 40px auto; 
+      background-color: #ffffff; 
+      border-radius: 12px; 
+      overflow: hidden; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+    }
+    .header { 
+      background-color: #008080; 
+      color: white; 
+      padding: 40px 30px; 
+      text-align: center; 
+    }
+    .header h1 { 
+      margin: 0; 
+      font-size: 26px; 
+      font-weight: 600; 
+      letter-spacing: -0.5px;
+    }
+    .subheader {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    .content { 
+      padding: 40px 35px; 
+    }
+    .intro {
+      font-size: 16px;
+      color: #334155;
+      margin-bottom: 30px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+      background-color: #dcfce7;
+      color: #166534;
+    }
+    .section-title { 
+      color: #008080; 
+      font-size: 16px; 
+      font-weight: 700; 
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 2px solid #e2e8f0; 
+      padding-bottom: 10px; 
+      margin-top: 35px; 
+      margin-bottom: 20px; 
+    }
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .detail-table td {
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+    }
+    .detail-table tr:last-child td {
+      border-bottom: none;
+    }
+    .label { 
+      font-weight: 500; 
+      color: #64748b; 
+      text-align: left;
+    }
+    .value { 
+      color: #0f172a; 
+      font-weight: 600; 
+      text-align: right; 
+    }
+    .footer { 
+      background-color: #f8fafc; 
+      padding: 30px; 
+      text-align: center; 
+      font-size: 13px; 
+      color: #94a3b8; 
+      border-top: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Booking Confirmed!</h1>
+      <div class="subheader">Leisure Yachts | Luxury Experience</div>
+    </div>
+    
+    <div class="content">
+      <p class="intro">
+        Dear {{customer_name}},<br><br>
+        Great news! Your booking request for <strong>{{yacht_name}}</strong> has been confirmed. We are excited to welcome you on board!
+      </p>
+
+      <div class="status-badge">Confirmed</div>
+
+      <div class="section-title">Your Trip Summary</div>
+      <table class="detail-table">
+        <tr>
+          <td class="label">Yacht</td>
+          <td class="value">{{yacht_name}}</td>
+        </tr>
+        <tr>
+          <td class="label">Date</td>
+          <td class="value">{{booking_date}}</td>
+        </tr>
+        <tr>
+          <td class="label">Time</td>
+          <td class="value">{{start_time}} - {{end_time}}</td>
+        </tr>
+        <tr>
+          <td class="label">Duration</td>
+          <td class="value">{{duration_hours}} Hours</td>
+        </tr>
+        <tr>
+          <td class="label">Guests</td>
+          <td class="value">{{guests}}</td>
+        </tr>
+      </table>
+
+      <div class="section-title">Payment Detail</div>
+      <table class="detail-table">
+        <tr>
+          <td class="label">Total Amount</td>
+          <td class="value" style="color: #008080; font-size: 18px;">AED {{total_amount}}</td>
+        </tr>
+      </table>
+
+      <p style="margin-top: 30px; font-size: 14px; color: #64748b;">
+        Please arrive 15 minutes before your scheduled departure. If you have any questions, feel free to contact us.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Leisure Yachts. All rights reserved.</p>
+      <p>Luxury Yacht Rentals Dubai</p>
+    </div>
+  </div>
+</body>
+</html>
