@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,6 +116,14 @@ export default function AdminLogin() {
             )}
           </form>
         </CardContent>
+        <div className="p-6 pt-0 border-t text-center">
+          <Button asChild variant="link" className="w-full text-muted-foreground mt-2">
+            <Link to="/">
+              ← Back to Home
+            </Link>
+          </Button>
+          <p className="text-xs text-muted-foreground/50 mt-1">Version 1.0</p>
+        </div>
       </Card>
     </div>
   );

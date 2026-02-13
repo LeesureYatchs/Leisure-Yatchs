@@ -167,15 +167,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t text-center">
           <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground"
+            variant="outline"
+            className="w-full justify-start text-slate-600 border-slate-200 hover:bg-destructive/5 hover:text-destructive hover:border-destructive/30 transition-all duration-300 group shadow-sm"
             onClick={signOut}
           >
-            <LogOut className="w-5 h-5 mr-3" />
-            Sign Out
+            <LogOut className="w-4 h-4 mr-3 group-hover:-translate-x-1 transition-transform duration-300" />
+            <span className="font-medium">Sign Out</span>
           </Button>
+          <p className="text-xs text-muted-foreground/50 mt-2">Version 1.0</p>
         </div>
       </aside>
 

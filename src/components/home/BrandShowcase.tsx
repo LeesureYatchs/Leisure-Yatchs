@@ -23,7 +23,8 @@ export function BrandShowcase() {
                     src="/leisureyatch.png" 
                     alt="LeisureYatchs Excellence" 
                     loading="eager"
-                    fetchPriority="high"
+                    // @ts-expect-error fetchpriority is a valid attribute but not in React types yet
+                    fetchpriority="high"
                     className="w-40 md:w-56 h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)] transition-transform duration-700 group-hover:scale-110"
                   />
                 </div>
