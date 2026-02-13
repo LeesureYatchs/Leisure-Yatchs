@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /admin
 
-Sitemap: https://leisureyatchs.com/sitemap.xml
+Sitemap: https://www.theleisureyacht.com/sitemap.xml
