@@ -46,7 +46,6 @@ export default function YachtDetailPage() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [relatedYachts, setRelatedYachts] = useState<Yacht[]>([]);
-
   /* 
    * Helper to check if a string is a valid UUID 
    */
@@ -525,18 +524,48 @@ export default function YachtDetailPage() {
                 </div>
               )}
 
-              {/* Reviews Section */}
+                  {/* Reviews Section */}
               {yacht && <ReviewsSection yachtId={yacht.id} />}
             </div>
 
             {/* Booking Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-28 space-y-6">
-                <WeatherWidget />
                 
-                <div className="bg-white border rounded-2xl p-6 shadow-lg">
+                <WeatherWidget />
+
+                {/* Demand Notification - Randomized based on Yacht ID */}
+                {(() => {
+                   // Generate a consistent random number (2-8) based on yacht ID
+                   const viewerCount = yacht ? (yacht.id.charCodeAt(0) % 7) + 2 : 3;
+                   const isHot = viewerCount > 5;
+                   
+                   return (
+                    <div className={`border rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-1000 ${
+                       isHot ? 'bg-red-50 border-red-200 text-red-900' : 'bg-amber-50 border-amber-200 text-amber-900'
+                    }`}>
+                      <div className="relative">
+                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                             isHot ? 'bg-red-500' : 'bg-amber-500'
+                          }`}></span>
+                          <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                             isHot ? 'bg-red-600' : 'bg-amber-600'
+                          }`}></span>
+                        </span>
+                        <Users className={`w-5 h-5 ${isHot ? 'text-red-600' : 'text-amber-600'}`} />
+                      </div>
+                      <p className="text-xs font-medium">
+                        <span className="font-bold">{isHot ? 'High Demand!' : 'Popular!'}</span> {viewerCount} people are looking at this yacht right now.
+                      </p>
+                    </div>
+                   );
+                })()}
+                
+                <div className="bg-white border rounded-2xl p-6 shadow-lg relative overflow-hidden">
                   <div className="mb-6">
                     <span className="text-sm text-muted-foreground">Starting from</span>
+                    
                     <div className="flex items-baseline gap-2">
                       {loading ? (
                         <Skeleton className="h-10 w-32" />
@@ -589,13 +618,15 @@ export default function YachtDetailPage() {
                   ) : (
                     <Button
                       onClick={() => setShowBookingForm(true)}
-                      className="w-full"
+                      className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 shadow-lg shadow-blue-500/20 transition-all duration-300 transform hover:-translate-y-0.5"
                       disabled={!yacht}
                       size="lg"
                     >
                       Check Availability
                     </Button>
                   )}
+                  
+                  {/* Payment icons removed as per user request (Cash/Pay later model) */}
                 </div>
               </div>
             </div>
@@ -626,7 +657,11 @@ export default function YachtDetailPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedYachts.map((relatedYacht) => (
-                <YachtCard key={relatedYacht.id} yacht={relatedYacht} />
+                <div key={relatedYacht.id} className="group perspective-1000">
+                  <div className="transition-transform duration-500 transform group-hover:rotate-y-2 group-hover:scale-105 preserve-3d">
+                    <YachtCard yacht={relatedYacht} />
+                  </div>
+                </div>
               ))}
             </div>
           </div>
