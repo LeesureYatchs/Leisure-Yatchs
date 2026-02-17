@@ -75,8 +75,14 @@ export default function AdminDashboard() {
       )
       .subscribe();
 
+    // Enable 3-second polling as requested for live data
+    const pollingInterval = setInterval(() => {
+      fetchStats();
+    }, 3000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollingInterval);
     };
   }, []);
 
