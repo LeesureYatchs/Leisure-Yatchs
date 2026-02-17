@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Loader2, Check, X } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, Check, X, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -47,6 +47,7 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
   const [step, setStep] = useState<'check' | 'form' | 'success'>('check');
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>();
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [durationHours, setDurationHours] = useState(minimumHours);
   const [startTime, setStartTime] = useState('10:00');
   const [formData, setFormData] = useState({
@@ -261,7 +262,7 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
         <div className="space-y-4">
           <div>
             <Label>Select Date</Label>
-            <Popover>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -275,7 +276,10 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={(newDate) => {
+                    setDate(newDate);
+                    setIsCalendarOpen(false);
+                  }}
                   disabled={(date) => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -355,6 +359,29 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
           <Button onClick={checkAvailability} className="w-full" disabled={loading || !date}>
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Check Availability
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold"
+            onClick={() => {
+              const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '971545706788';
+              const message = `Hello Leisure Yachts,\n\nI am interested in booking *${yachtName}*.\n\n📅 Date: ${date ? format(date, 'PPP') : 'Not selected'}\n⏰ Time: ${startTime}\n⏳ Duration: ${durationHours} hours\n👥 Guests: ${formData.guests || maxCapacity}\n💰 Estimated Price: AED ${totalAmount.toLocaleString()}\n\nPlease confirm availability.`;
+              window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+            }}
+          >
+            <MessageCircle className="w-5 h-5 mr-2" />
+            Chat on WhatsApp
           </Button>
         </div>
       )}
