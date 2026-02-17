@@ -5,7 +5,8 @@ import { supabase, Yacht, Offer } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Ruler, ArrowRight, Percent, Tag } from 'lucide-react';
+import { Users, Ruler, ArrowRight, Percent, Tag, Crown, Star, Gem, Anchor } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface YachtCardProps {
   yacht: Yacht;
@@ -67,18 +68,31 @@ export function YachtCard({ yacht }: YachtCardProps) {
           )}
 
           {yacht.category && (
-            <div className="absolute top-4 left-4 z-10 font-bold">
-              <Badge className={`text-white backdrop-blur-md shadow-sm border-0 ${
-                yacht.category === 'Premium' 
-                  ? 'bg-amber-500/90' 
-                  : yacht.category === 'Super' 
-                    ? 'bg-slate-900/90' 
-                    : yacht.category === 'Luxury'
-                      ? 'bg-emerald-600/90'
-                      : 'bg-blue-500/90' // Default for Standard
-              }`}>
-                {yacht.category} Yacht
-              </Badge>
+            <div className="absolute top-4 left-4 z-20">
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className={cn(
+                  "relative flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-xl border border-white/20 shadow-2xl overflow-hidden group/badge",
+                  yacht.category === 'Premium' ? "bg-gradient-to-r from-amber-400/90 to-amber-600/90 text-amber-950" :
+                  yacht.category === 'Super' ? "bg-gradient-to-r from-slate-800/90 to-black/90 text-white" :
+                  yacht.category === 'Luxury' ? "bg-gradient-to-r from-emerald-500/90 to-emerald-700/90 text-white" :
+                  "bg-gradient-to-r from-blue-500/90 to-blue-700/90 text-white"
+                )}
+              >
+                {/* Animated Shine Effect */}
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/badge:animate-[shimmer_1.5s_infinite] transition-transform pointer-events-none" />
+                
+                {/* Specific Icons */}
+                {yacht.category === 'Premium' && <Crown className="w-3.5 h-3.5" />}
+                {yacht.category === 'Super' && <Star className="w-3.5 h-3.5 fill-current" />}
+                {yacht.category === 'Luxury' && <Gem className="w-3.5 h-3.5" />}
+                {(!yacht.category || yacht.category === 'Standard') && <Anchor className="w-3.5 h-3.5" />}
+                
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {yacht.category}
+                </span>
+              </motion.div>
             </div>
           )}
 
