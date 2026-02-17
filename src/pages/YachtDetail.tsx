@@ -46,6 +46,24 @@ export default function YachtDetailPage() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [relatedYachts, setRelatedYachts] = useState<Yacht[]>([]);
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const end = new Date();
+      end.setHours(23, 59, 59);
+      const now = new Date();
+      const diff = end.getTime() - now.getTime();
+
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
   /* 
    * Helper to check if a string is a valid UUID 
    */
@@ -533,6 +551,24 @@ export default function YachtDetailPage() {
               <div className="sticky top-28 space-y-6">
                 
                 <WeatherWidget />
+
+                {/* Dynamic Offer Countdown Timer */}
+                {offer && (
+                   <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-3 text-white shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-700 mb-4">
+                      <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                            <Clock className="w-5 h-5 animate-pulse" />
+                            <span className="font-bold text-sm">Limited Time Offer!</span>
+                         </div>
+                         <div className="font-mono font-bold text-lg tracking-wider">
+                           {timeLeft}
+                         </div>
+                      </div>
+                      <p className="text-[10px] text-white/90 mt-1 text-center">
+                         Book now to save {offer.discount_type === 'percentage' ? `${offer.discount_value}%` : `AED ${offer.discount_value}`}
+                      </p>
+                   </div>
+                )}
 
                 {/* Demand Notification - Randomized based on Yacht ID */}
                 {(() => {
