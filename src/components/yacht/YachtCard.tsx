@@ -73,7 +73,9 @@ export function YachtCard({ yacht }: YachtCardProps) {
                   ? 'bg-amber-500/90' 
                   : yacht.category === 'Super' 
                     ? 'bg-slate-900/90' 
-                    : 'bg-primary/90'
+                    : yacht.category === 'Luxury'
+                      ? 'bg-emerald-600/90'
+                      : 'bg-blue-500/90' // Default for Standard
               }`}>
                 {yacht.category} Yacht
               </Badge>

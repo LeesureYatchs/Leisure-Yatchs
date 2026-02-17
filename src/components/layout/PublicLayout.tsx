@@ -36,7 +36,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
         </div>
         
         <span className="absolute right-full top-1/2 -translate-y-1/2 mr-3 bg-white text-slate-800 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 whitespace-nowrap pointer-events-none before:content-[''] before:absolute before:top-1/2 before:-right-2 before:-translate-y-1/2 before:border-8 before:border-transparent before:border-l-white">
-          cw with us
+          chat with us
         </span>
       </a>
     </div>
