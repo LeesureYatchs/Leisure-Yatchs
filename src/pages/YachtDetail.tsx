@@ -35,6 +35,8 @@ import {
   Clock,
   Play,
 } from 'lucide-react';
+import ShipLoader from '@/components/ui/ShipLoader';
+import { SocialProofPopup } from '@/components/ui/SocialProofPopup';
 
 export default function YachtDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -703,6 +705,9 @@ export default function YachtDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Social Proof Notification */}
+      <SocialProofPopup />
     </PublicLayout>
   );
 }
