@@ -59,7 +59,7 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
     message: '',
   });
   const [dateBookings, setDateBookings] = useState<{ start_time: string; end_time: string }[]>([]);
-  const [weather, setWeather] = useState<{ temp: number; wind: number; code: number } | null>(null);
+  const [weather, setWeather] = useState<{ temp: number; wind: number; code: number; sunset: string } | null>(null);
 
   useEffect(() => {
     if (date) {
@@ -93,7 +93,7 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
       const long = 55.2708;
       
       const response = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&daily=weathercode,temperature_2m_max,windspeed_10m_max&timezone=auto&start_date=${formattedDate}&end_date=${formattedDate}`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&daily=weathercode,temperature_2m_max,windspeed_10m_max,sunset&timezone=auto&start_date=${formattedDate}&end_date=${formattedDate}`
       );
       const data = await response.json();
 
@@ -101,12 +101,34 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
         setWeather({
           temp: data.daily.temperature_2m_max[0],
           wind: data.daily.windspeed_10m_max[0],
-          code: data.daily.weathercode[0]
+          code: data.daily.weathercode[0],
+          sunset: data.daily.sunset[0]
         });
       }
     } catch (error) {
       console.error('Error fetching weather:', error);
     }
+  };
+
+  const handleSunsetPlan = () => {
+    if (!weather?.sunset) return;
+    
+    // Parse sunset time (e.g., "2023-10-27T17:42")
+    const sunsetDate = new Date(weather.sunset);
+    
+    // Subtract 1 hour for start time
+    sunsetDate.setHours(sunsetDate.getHours() - 1);
+    
+    const hours = String(sunsetDate.getHours()).padStart(2, '0');
+    const minutes = String(sunsetDate.getMinutes()).padStart(2, '0');
+    
+    setStartTime(`${hours}:${minutes}`);
+    if (durationHours < 2) setDurationHours(2);
+    
+    toast({
+      title: "Golden Hour Planned! 🌅",
+      description: `We've set your cruise to start at ${hours}:${minutes}, catching the perfect sunset views.`,
+    });
   };
 
   const getWeatherIcon = (code: number) => {
@@ -337,16 +359,27 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
 
           {/* Weather Widget */}
           {weather && (
-            <div className={`p-3 rounded-lg border flex items-center gap-3 text-sm ${weather.wind > 25 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
-              <span className="text-2xl">{getWeatherIcon(weather.code)}</span>
-              <div>
-                <p className="font-semibold flex items-center gap-2">
-                  {weather.temp}°C • Wind: {weather.wind} km/h
-                </p>
-                <p className="text-xs opacity-90">
-                  {getWeatherDescription(weather.code, weather.wind)}
-                </p>
+            <div className={`p-3 rounded-lg border flex items-center justify-between gap-3 text-sm ${weather.wind > 25 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{getWeatherIcon(weather.code)}</span>
+                <div>
+                  <p className="font-semibold flex items-center gap-2">
+                    {weather.temp}°C • Wind: {weather.wind} km/h
+                  </p>
+                  <p className="text-xs opacity-90">
+                    {getWeatherDescription(weather.code, weather.wind)}
+                  </p>
+                </div>
               </div>
+              
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="bg-white/50 hover:bg-white text-xs h-8 whitespace-nowrap"
+                onClick={handleSunsetPlan}
+              >
+                Plan for Sunset 🌅
+              </Button>
             </div>
           )}
 
