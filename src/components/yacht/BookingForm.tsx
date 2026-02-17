@@ -59,10 +59,12 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
     message: '',
   });
   const [dateBookings, setDateBookings] = useState<{ start_time: string; end_time: string }[]>([]);
+  const [weather, setWeather] = useState<{ temp: number; wind: number; code: number } | null>(null);
 
   useEffect(() => {
     if (date) {
       fetchDateBookings();
+      fetchWeather();
 
       const channel = supabase
         .channel(`yacht-daily-availability-${yachtId}`)
@@ -78,8 +80,49 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
       };
     } else {
       setDateBookings([]);
+      setWeather(null);
     }
   }, [date]);
+
+  const fetchWeather = async () => {
+    if (!date) return;
+    try {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      // Dubai Coordinates
+      const lat = 25.2048;
+      const long = 55.2708;
+      
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&daily=weathercode,temperature_2m_max,windspeed_10m_max&timezone=auto&start_date=${formattedDate}&end_date=${formattedDate}`
+      );
+      const data = await response.json();
+
+      if (data.daily) {
+        setWeather({
+          temp: data.daily.temperature_2m_max[0],
+          wind: data.daily.windspeed_10m_max[0],
+          code: data.daily.weathercode[0]
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+    }
+  };
+
+  const getWeatherIcon = (code: number) => {
+    if (code <= 3) return '☀️'; // Clear/Cloudy
+    if (code <= 48) return '🌫️'; // Fog
+    if (code <= 67) return '🌧️'; // Rain
+    if (code <= 77) return '❄️'; // Snow/Hail
+    return '⛈️'; // Thunderstorm
+  };
+
+  const getWeatherDescription = (code: number, wind: number) => {
+    if (wind > 30) return 'High winds expected. Sea might be choppy.';
+    if (code <= 3) return 'Excellent cruising weather.';
+    if (code <= 67) return 'Light rain expected.';
+    return 'Check with captain for weather updates.';
+  };
 
   const fetchDateBookings = async () => {
     if (!date) return;
@@ -291,6 +334,21 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* Weather Widget */}
+          {weather && (
+            <div className={`p-3 rounded-lg border flex items-center gap-3 text-sm ${weather.wind > 25 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
+              <span className="text-2xl">{getWeatherIcon(weather.code)}</span>
+              <div>
+                <p className="font-semibold flex items-center gap-2">
+                  {weather.temp}°C • Wind: {weather.wind} km/h
+                </p>
+                <p className="text-xs opacity-90">
+                  {getWeatherDescription(weather.code, weather.wind)}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="startTime">Start Time</Label>
