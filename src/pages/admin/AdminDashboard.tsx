@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
   Ship, Tag, Calendar, DollarSign, Users, 
-  ArrowUpRight, ShoppingBag, PieChart, 
+  ArrowUpRight, ShoppingBag, PieChart as LucidePieChart, 
   ChevronRight, Sparkles, Clock
 } from 'lucide-react';
 import { 
   Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip, 
-  CartesianGrid
+  CartesianGrid, PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 import ShipLoader from '@/components/ui/ShipLoader';
@@ -27,6 +27,9 @@ interface DashboardStats {
   monthlyRevenue: { name: string; total: number }[];
   revenueByYacht: { name: string; total: number }[];
   recentBookings: any[];
+  statusDistribution: { name: string; value: number }[];
+  topViewedYachts: { name: string; views: number }[];
+  eventTypePopularity: { name: string; count: number }[];
 }
 
 export default function AdminDashboard() {
@@ -41,6 +44,9 @@ export default function AdminDashboard() {
     monthlyRevenue: [],
     revenueByYacht: [],
     recentBookings: [],
+    statusDistribution: [],
+    topViewedYachts: [],
+    eventTypePopularity: [],
   });
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState('');
@@ -84,24 +90,58 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       const [yachtsRes, offersRes, bookingsRes] = await Promise.all([
-        supabase.from('yachts').select('id, name', { count: 'exact' }),
+        supabase.rpc('get_yachts_with_views'), // Using fallback to standard select if rpc fails below
         supabase
           .from('offers')
           .select('id', { count: 'exact' })
           .eq('status', 'active'),
         supabase
           .from('bookings')
-          .select('id, status, total_amount, booking_date, customer_name, yacht_id, created_at')
+          .select('id, status, total_amount, booking_date, customer_name, yacht_id, created_at, event_type')
           .order('created_at', { ascending: false }),
       ]);
 
+      // Fallback for yachts if RPC isn't applied yet
+      let yachtsData = yachtsRes.data || [];
+      if (!yachtsRes.data) {
+        const { data } = await supabase.from('yachts').select('id, name, views_count');
+        yachtsData = data || [];
+      }
+
       const bookings = bookingsRes.data || [];
-      const yachtsData = yachtsRes.data || [];
       const totalBookings = bookings.length;
       const pendingBookings = bookings.filter((b) => b.status === 'pending').length;
       
-      const completedBookings = bookings.filter(b => b.status === 'completed');
+      const completedBookings = bookings.filter(b => b.status === 'completed' || b.status === 'confirmed');
       const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
+
+      // Status Distribution
+      const statusCounts: Record<string, number> = {};
+      bookings.forEach(b => {
+        statusCounts[b.status] = (statusCounts[b.status] || 0) + 1;
+      });
+      const statusDistribution = Object.entries(statusCounts).map(([name, value]) => ({ 
+        name: name.charAt(0).toUpperCase() + name.slice(1), 
+        value 
+      }));
+
+      // Event Type Popularity
+      const eventCounts: Record<string, number> = {};
+      bookings.forEach(b => {
+        if (b.event_type) {
+          eventCounts[b.event_type] = (eventCounts[b.event_type] || 0) + 1;
+        }
+      });
+      const eventTypePopularity = Object.entries(eventCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // Top Viewed Yachts
+      const topViewedYachts = [...yachtsData]
+        .map(y => ({ name: y.name, views: y.views_count || 0 }))
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 5);
 
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       const todayRevenue = completedBookings
@@ -124,7 +164,7 @@ export default function AdminDashboard() {
       const revenueByYacht = yachtsData.map(y => ({
         name: y.name,
         total: yachtRevenueMap[y.id] || 0
-      })).sort((a, b) => b.total - a.total);
+      })).sort((a, b) => b.total - a.total).slice(0, 5);
 
       const today = new Date();
       const sixMonthsAgo = subMonths(today, 5);
@@ -160,7 +200,7 @@ export default function AdminDashboard() {
       });
 
       setStats({
-        totalYachts: yachtsRes.count || 0,
+        totalYachts: yachtsData.length,
         activeOffers: offersRes.count || 0,
         pendingBookings,
         totalBookings,
@@ -170,6 +210,9 @@ export default function AdminDashboard() {
         monthlyRevenue,
         revenueByYacht,
         recentBookings,
+        statusDistribution,
+        topViewedYachts,
+        eventTypePopularity,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -328,7 +371,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-7">
-          {/* Main Chart Area (Original) */}
+          {/* Main Chart Area */}
           <Card className="col-span-4 border-none shadow-2xl bg-white/80 backdrop-blur-md relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
             <CardHeader className="flex flex-row items-center justify-between pb-8">
@@ -398,72 +441,122 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* Social / Recent Events (Original) */}
+          {/* Booking Status Distribution */}
           <Card className="col-span-3 border-none shadow-2xl bg-white/80 backdrop-blur-md overflow-hidden">
             <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-xl font-bold">Recent Activity</CardTitle>
-                  <CardDescription>Latest customer bookings</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm" className="text-primary gap-1 font-bold">
-                  View All <ChevronRight className="w-4 h-4" />
-                </Button>
+              <div className="space-y-1">
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                   <LucidePieChart className="w-5 h-5 text-primary" />
+                   Booking Status
+                </CardTitle>
+                <CardDescription>Current state of all requests</CardDescription>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {stats.recentBookings.length === 0 ? (
-                  <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed">
-                     <p className="text-sm text-muted-foreground">No recent bookings</p>
-                  </div>
-                ) : (
-                  stats.recentBookings.map((booking, i) => (
-                    <div key={booking.id} className="group flex items-center gap-4 p-3 rounded-2xl transition-all hover:bg-slate-50 border border-transparent hover:border-slate-100">
-                      <div className="relative">
-                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-slate-100 to-white shadow-sm flex items-center justify-center border border-slate-200 group-hover:scale-110 transition-transform">
-                          <span className="text-lg font-black text-slate-700">
-                            {booking.customer_name?.[0] || 'C'}
-                          </span>
-                        </div>
-                        <div className={cn(
-                          "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white",
-                          booking.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-400'
-                        )} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate text-slate-800">{booking.customer_name || 'Guest User'}</p>
-                        <p className="text-xs text-muted-foreground truncate font-medium">
-                          {booking.yachtName} • {format(new Date(booking.booking_date), 'MMM d')}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-black text-slate-900">AED {booking.total_amount}</p>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">{booking.status}</p>
-                      </div>
+            <CardContent className="flex flex-col items-center justify-center pt-0">
+               <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={stats.statusDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {stats.statusDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={['#3b82f6', '#f59e0b', '#10b981', '#ef4444'][index % 4]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+               </ResponsiveContainer>
+               <div className="grid grid-cols-2 gap-4 w-full mt-4">
+                  {stats.statusDistribution.map((s, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                       <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#ef4444'][i % 4] }} />
+                       {s.name} ({s.value})
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Extra: Revenue by Yacht (New) */}
-        <Card className="border-none shadow-2xl bg-white/80 backdrop-blur-md overflow-hidden">
+        <div className="grid gap-6 lg:grid-cols-7 mt-8">
+           {/* Event Popularity */}
+           <Card className="col-span-3 border-none shadow-2xl bg-white/80 backdrop-blur-md overflow-hidden">
+            <CardHeader>
+               <CardTitle className="text-xl font-bold">Popular Events</CardTitle>
+               <CardDescription>Most requested trip types</CardDescription>
+            </CardHeader>
+            <CardContent>
+               <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={stats.eventTypePopularity} layout="vertical">
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" width={100} fontSize={10} tickLine={false} axisLine={false} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
+                  </BarChart>
+               </ResponsiveContainer>
+            </CardContent>
+           </Card>
+
+           {/* Top Viewed Yachts */}
+           <Card className="col-span-4 border-none shadow-2xl bg-white/80 backdrop-blur-md overflow-hidden">
+             <CardHeader className="flex flex-row items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                     <Users className="w-5 h-5 text-primary" />
+                     Popularity Track
+                  </CardTitle>
+                  <CardDescription>Most visited yacht pages</CardDescription>
+                </div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded">
+                   Live Views
+                </div>
+             </CardHeader>
+             <CardContent>
+                <div className="space-y-4">
+                   {stats.topViewedYachts.map((yacht, i) => (
+                     <div key={i} className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                           #{i+1}
+                        </div>
+                        <div className="flex-1">
+                           <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm font-bold text-slate-700">{yacht.name}</span>
+                              <span className="text-xs font-black text-slate-900">{yacht.views} views</span>
+                           </div>
+                           <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary/70" 
+                                style={{ width: `${(yacht.views / (stats.topViewedYachts[0]?.views || 1)) * 100}%` }}
+                              />
+                           </div>
+                        </div>
+                     </div>
+                   ))}
+                </div>
+             </CardContent>
+           </Card>
+        </div>
+
+        {/* Revenue by Yacht */}
+        <Card className="border-none shadow-2xl bg-white/80 backdrop-blur-md overflow-hidden mt-8">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <CardTitle className="text-xl font-bold flex items-center gap-2">
                   <Ship className="w-5 h-5 text-primary" />
-                  Yatch Based Revenue
+                  Value by Yacht
                 </CardTitle>
-                <CardDescription>Breakdown of earnings by vessel</CardDescription>
+                <CardDescription>Vessel performance by total income</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
               {stats.revenueByYacht.length === 0 ? (
                 <div className="col-span-full text-center py-10 bg-muted/10 rounded-xl border border-dashed">
                   <p className="text-sm text-muted-foreground">No yacht revenue data available</p>
@@ -480,10 +573,10 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                     <div className="space-y-1">
-                      <h4 className="font-bold text-slate-800 truncate">{yacht.name}</h4>
-                      <p className="text-2xl font-black text-slate-900">AED {yacht.total.toLocaleString()}</p>
+                      <h4 className="font-bold text-slate-800 truncate text-sm">{yacht.name}</h4>
+                      <p className="text-xl font-black text-slate-900">AED {yacht.total.toLocaleString()}</p>
                     </div>
-                    <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="mt-4 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-primary" 
                         style={{ width: `${(yacht.total / (stats.revenueByYacht[0]?.total || 1)) * 100}%` }} 
@@ -494,6 +587,54 @@ export default function AdminDashboard() {
               )}
             </div>
           </CardContent>
+        </Card>
+
+        {/* Recent Activity Table (Moved to bottom) */}
+        <Card className="border-none shadow-2xl bg-white/80 backdrop-blur-md overflow-hidden mt-8">
+           <CardHeader>
+              <div className="flex items-center justify-between">
+                 <div className="space-y-1">
+                    <CardTitle className="text-xl font-bold">Recent Bookings</CardTitle>
+                    <CardDescription>Latest customer requests summary</CardDescription>
+                 </div>
+                 <Button variant="outline" size="sm" className="font-bold">View List</Button>
+              </div>
+           </CardHeader>
+           <CardContent>
+              <div className="overflow-x-auto">
+                 <table className="w-full text-left text-sm">
+                    <thead>
+                       <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                          <th className="pb-3 px-2">Customer</th>
+                          <th className="pb-3 px-2">Yacht</th>
+                          <th className="pb-3 px-2">Date</th>
+                          <th className="pb-3 px-2">Total</th>
+                          <th className="pb-3 px-2">Status</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       {stats.recentBookings.map((b, i) => (
+                         <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors group">
+                            <td className="py-4 px-2 font-bold text-slate-700">{b.customer_name}</td>
+                            <td className="py-4 px-2 text-slate-600 font-medium">{b.yachtName}</td>
+                            <td className="py-4 px-2 text-slate-500 font-mono text-xs">{format(new Date(b.booking_date), 'MMM d, yyyy')}</td>
+                            <td className="py-4 px-2 font-black text-slate-900">AED {b.total_amount}</td>
+                            <td className="py-4 px-2">
+                               <span className={cn(
+                                 "px-2 py-1 rounded-full text-[10px] font-bold uppercase",
+                                 b.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                                 b.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
+                                 'bg-amber-100 text-amber-700'
+                               )}>
+                                  {b.status}
+                               </span>
+                            </td>
+                         </tr>
+                       ))}
+                    </tbody>
+                 </table>
+              </div>
+           </CardContent>
         </Card>
       </div>
     </AdminLayout>

@@ -170,6 +170,9 @@ export default function YachtDetailPage() {
         if (!offerError && offerData) {
           setOffer(offerData as Offer);
         }
+
+        // Increment view count for analytics
+        await supabase.rpc('increment_yacht_views', { yacht_id: yachtData.id });
       }
     } catch (error) {
       console.error('Error fetching yacht:', error);
