@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,43 +27,45 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <ScrollToTop />
-          <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-background">
-              <ShipLoader />
-            </div>
-          }>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/yachts" element={<Yachts />} />
-              <Route path="/yachts/:id" element={<YachtDetail />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <ScrollToTop />
+            <Suspense fallback={
+              <div className="min-h-screen flex items-center justify-center bg-background">
+                <ShipLoader />
+              </div>
+            }>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/yachts" element={<Yachts />} />
+                <Route path="/yachts/:id" element={<YachtDetail />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
 
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/yachts" element={<AdminYachts />} />
-              <Route path="/admin/offers" element={<AdminOffers />} />
-              <Route path="/admin/bookings" element={<AdminBookings />} />
-              <Route path="/admin/trip-itineraries" element={<AdminTripItineraries />} />
-              <Route path="/admin/enquiries" element={<AdminEnquiries />} />
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminLogin />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/yachts" element={<AdminYachts />} />
+                <Route path="/admin/offers" element={<AdminOffers />} />
+                <Route path="/admin/bookings" element={<AdminBookings />} />
+                <Route path="/admin/trip-itineraries" element={<AdminTripItineraries />} />
+                <Route path="/admin/enquiries" element={<AdminEnquiries />} />
 
-              {/* Catch-all */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+                {/* Catch-all */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

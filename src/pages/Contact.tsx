@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PublicLayout } from '@/components/layout/PublicLayout';
+import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,9 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function ContactPage() {
   const { toast } = useToast();
-  useEffect(() => {
-    document.title = "Contact LeisureYatchs | Book Your Yacht Charter in Dubai";
-  }, []);
+  // Title handled by SEO component
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -66,6 +65,11 @@ export default function ContactPage() {
 
   return (
     <PublicLayout>
+      <SEO 
+        title="Contact Us | Book Your Yacht in Dubai"
+        description="Get in touch with LeisureYacht team for bookings and enquiries. Visit us at Dubai Marina or call us 24/7 for luxury yacht charters."
+        url="/contact"
+      />
       {/* Hero */}
       <section className="pt-32 pb-16 ocean-gradient">
         <div className="container mx-auto px-4 text-center">

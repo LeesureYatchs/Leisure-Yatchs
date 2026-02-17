@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
+import { SEO } from '@/components/SEO';
 import { Anchor, Award, Users, MapPin } from 'lucide-react';
 
 export default function AboutPage() {
-  useEffect(() => {
-    document.title = "About LeisureYatchs | Dubai's Premier Yacht Charter Company";
-  }, []);
+  // Title handled by SEO component
 
   return (
     <PublicLayout>
+      <SEO 
+        title="About Us | Trusted Yacht Charter Company in Dubai"
+        description="Learn about LeisureYacht, Dubai's premier luxury yacht charter company. Over 10 years of creating unforgettable maritime experiences with a diverse fleet."
+        url="/about"
+      />
       {/* Hero */}
       <section className="relative pt-32 pb-20">
         <div className="absolute inset-0">

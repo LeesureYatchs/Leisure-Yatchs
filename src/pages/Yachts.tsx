@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase, Yacht } from '@/lib/supabase';
+import { SEO } from '@/components/SEO';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { YachtCard } from '@/components/yacht/YachtCard';
 import { Loader2, Ship, Search, Filter } from 'lucide-react';
@@ -23,7 +24,7 @@ export default function YachtsPage() {
 
   useEffect(() => {
     fetchYachts();
-    document.title = "Luxury Yacht Rental Dubai | LeisureYatchs Fleet";
+    fetchYachts();
 
     // Enable Realtime Subscriptions for public fleet list
     const channel = supabase
@@ -74,6 +75,11 @@ export default function YachtsPage() {
 
   return (
     <PublicLayout>
+      <SEO 
+        title="Our Fleet | Luxury Yachts for Rent in Dubai"
+        description="Browse our exclusive fleet of luxury yachts available for rent in Dubai Marina. From 40ft cruisers to 150ft superyachts. Live availability & instant booking."
+        url="/yachts"
+      />
       {/* Hero */}
       <section className="relative pt-32 pb-20 ocean-gradient">
         <div className="container mx-auto px-4">

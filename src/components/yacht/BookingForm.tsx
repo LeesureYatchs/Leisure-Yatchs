@@ -217,28 +217,7 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
         console.error('Failed to send admin email:', adminEmailError);
       }
 
-      // Send email notification to Customer
-      try {
-        await emailjs.send(
-          import.meta.env.VITE_EMAILJS_SERVICE_ID,
-          import.meta.env.VITE_EMAILJS_CUSTOMER_TEMPLATE_ID, // Customer Template
-          {
-            to_email: formData.email,
-            customer_name: formData.name,
-            yacht_name: yachtName,
-            booking_date: format(date, 'PPP'),
-            start_time: startTime,
-            end_time: endTime,
-            duration_hours: durationHours,
-            total_amount: totalAmount,
-            guests: formData.guests,
-            event_type: formData.eventType,
-          },
-          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-        );
-      } catch (emailError) {
-        console.error('Failed to send customer email:', emailError);
-      }
+
 
       toast({
         title: 'Booking request submitted!',

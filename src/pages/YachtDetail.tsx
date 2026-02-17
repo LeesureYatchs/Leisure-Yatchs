@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase, Yacht, Offer, TripItinerary } from '@/lib/supabase';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { BookingForm } from '@/components/yacht/BookingForm';
+import { SEO } from '@/components/SEO';
 import { YachtCard } from '@/components/yacht/YachtCard';
 import { CruiseRoutes } from '@/components/yacht/CruiseRoutes';
 import { Button } from '@/components/ui/button';
@@ -132,7 +133,7 @@ export default function YachtDetailPage() {
       setYacht(yachtData as Yacht | null);
 
       if (yachtData) {
-        document.title = `${yachtData.name} | Luxury Yacht Rental Dubai | LeisureYatchs`;
+        // Title handled by SEO component
         const today = new Date().toISOString().split('T')[0];
         
         // Fetch offer using the RESOLVED yacht ID, not the URL param
@@ -196,6 +197,14 @@ export default function YachtDetailPage() {
 
   return (
     <PublicLayout>
+      {yacht && (
+        <SEO
+          title={`${yacht.name} Rental Dubai | ${yacht.feet}ft Luxury Yacht`}
+          description={`${yacht.name} - ${yacht.feet}ft luxury yacht available for charter in Dubai. Capacity: ${yacht.capacity} guests. Features: ${yacht.amenities?.slice(0, 3).join(', ')}. Book now from AED ${yacht.hourly_price}/hour.`}
+          image={yacht.images?.[0]}
+          url={`/yachts/${yacht.id}`}
+        />
+      )}
       {/* Back Button */}
       <div className="pt-24 pb-4 bg-ocean-light">
         <div className="container mx-auto px-4">
