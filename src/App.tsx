@@ -22,6 +22,7 @@ const AdminOffers = lazy(() => import("./pages/admin/AdminOffers"));
 const AdminBookings = lazy(() => import("./pages/admin/AdminBookings"));
 const AdminTripItineraries = lazy(() => import("./pages/admin/AdminTripItineraries"));
 const AdminEnquiries = lazy(() => import("./pages/admin/AdminEnquiries"));
+const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="/admin/bookings" element={<AdminBookings />} />
                 <Route path="/admin/trip-itineraries" element={<AdminTripItineraries />} />
                 <Route path="/admin/enquiries" element={<AdminEnquiries />} />
+                <Route path="/admin/reviews" element={<AdminReviews />} />
 
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />

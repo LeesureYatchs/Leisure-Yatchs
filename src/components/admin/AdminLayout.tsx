@@ -15,6 +15,7 @@ import {
   X,
   Route,
   Mail,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ShipLoader from '@/components/ui/ShipLoader';
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/admin/offers', label: 'Offers', icon: Tag },
   { href: '/admin/bookings', label: 'Bookings', icon: Calendar },
   { href: '/admin/enquiries', label: 'Enquiries', icon: Mail },
+  { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -38,11 +40,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   const [pendingEnquiriesCount, setPendingEnquiriesCount] = useState(0);
+  const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
 
   useEffect(() => {
     fetchPendingCounts();
 
-    // Subscribe to booking and enquiry changes
+    // Subscribe to booking, enquiry, and review changes
     const bookingsChannel = supabase
       .channel('bookings-count-changes')
       .on(
@@ -61,9 +64,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       )
       .subscribe();
 
+    const reviewsChannel = supabase
+      .channel('reviews-count-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reviews' },
+        () => fetchPendingCounts()
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(bookingsChannel);
       supabase.removeChannel(enquiriesChannel);
+      supabase.removeChannel(reviewsChannel);
     };
   }, []);
 
@@ -83,6 +96,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       .eq('status', 'pending');
     
     setPendingEnquiriesCount(eCount || 0);
+
+    // Fetch reviews count
+    const { count: rCount } = await supabase
+      .from('reviews')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    
+    setPendingReviewsCount(rCount || 0);
   };
 
   if (loading) {
@@ -161,6 +182,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               {item.label === 'Enquiries' && pendingEnquiriesCount > 0 && (
                 <span className="bg-destructive text-white text-xs font-bold px-2 py-0.5 rounded-full">
                    {pendingEnquiriesCount}
+                </span>
+              )}
+              {item.label === 'Reviews' && pendingReviewsCount > 0 && (
+                <span className="bg-destructive text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                   {pendingReviewsCount}
                 </span>
               )}
             </Link>

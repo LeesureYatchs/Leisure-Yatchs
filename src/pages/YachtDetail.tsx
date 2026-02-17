@@ -6,6 +6,8 @@ import { BookingForm } from '@/components/yacht/BookingForm';
 import { SEO } from '@/components/SEO';
 import { YachtCard } from '@/components/yacht/YachtCard';
 import { CruiseRoutes } from '@/components/yacht/CruiseRoutes';
+import { RouteMap } from '@/components/yacht/RouteMap';
+import { ReviewsSection } from '@/components/yacht/ReviewsSection';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -349,10 +351,32 @@ export default function YachtDetailPage() {
       {/* Yacht Details */}
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-12">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Title & Offer */}
+              {/* Title & Offer (Mobile: Hidden, showed in Sidebar; OR keep duplicate? No, sidebar moves to top) */}
+              
+              {/* ... Title Logic ... */}
+              {/* Note: Title is inside Main Content. If we reverse main cols, Sidebar is Top. Title is in Main (Bottom). 
+                  This puts Title BELOW the Booking Form. 
+                  Is this desired? "check avalibily ... last ah iurkku ... atha mela kondu po".
+                  Yes, usually Booking Form / Price is key.
+                  But Name/Title is also key. 
+                  If Sidebar is first, user sees "Book Now" before "Yacht Name". 
+                  Ideally: Name -> Booking -> Description.
+                  
+                  Sidebar contains: WeatherWidget, BookingForm (with Price).
+                  BookingForm has Price.
+                  
+                  If I move Sidebar to top:
+                  Mobile:
+                  1. Weather
+                  2. Booking Form (Price + Button)
+                  3. Main Content (Name, Specs, Description...)
+                  
+                  This seems acceptable for "Availability on top".
+               */}
+
               <div>
                 {loading ? (
                   <div className="space-y-4">
@@ -417,8 +441,16 @@ export default function YachtDetailPage() {
                 </div>
               )}
 
-              {/* Cruise Routes */}
-              <CruiseRoutes />
+              {/* Interactive Route Map & Cruise Routes */}
+              <div className="flex flex-col-reverse lg:block">
+                 <CruiseRoutes />
+                 <div className="mb-8 lg:mb-0 lg:mt-8">
+                    <h2 className="text-xl font-semibold mb-4">Interactive Route Map</h2>
+                    <div className="h-[400px] w-full rounded-2xl overflow-hidden">
+                        <RouteMap />
+                    </div>
+                 </div>
+              </div>
 
               {/* Trip Itineraries */}
               {itineraries.length > 0 && (
@@ -492,6 +524,9 @@ export default function YachtDetailPage() {
                   </p>
                 </div>
               )}
+
+              {/* Reviews Section */}
+              {yacht && <ReviewsSection yachtId={yacht.id} />}
             </div>
 
             {/* Booking Sidebar */}
