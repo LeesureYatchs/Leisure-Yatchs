@@ -3,15 +3,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, Offer, Yacht } from '@/lib/supabase';
 import { Sparkles, X, ChevronRight, Percent, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 export function SpecialOfferBadge() {
   const [offers, setOffers] = useState<(Offer & { yacht: Yacht })[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     fetchActiveOffers();
   }, []);
+
+  useEffect(() => {
+    if (offers.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % offers.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [offers]);
 
   const fetchActiveOffers = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -20,7 +31,7 @@ export function SpecialOfferBadge() {
       .select('*, yacht:yachts(*)')
       .eq('status', 'active')
       .gte('end_date', today)
-      .limit(3);
+      .limit(5);
 
     if (data) {
       setOffers(data as (Offer & { yacht: Yacht })[]);
@@ -29,69 +40,121 @@ export function SpecialOfferBadge() {
 
   if (offers.length === 0 || !isVisible) return null;
 
-  const topOffer = offers[0];
+  const currentOffer = offers[activeIndex];
+  const yachtImage = currentOffer.yacht.images?.[0] || 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=1920&q=80';
 
   return (
-    <section className="py-12 ocean-gradient overflow-hidden relative border-y border-primary/10">
-      {/* Background Decorative Elements */}
-      <div className="absolute inset-0 pointer-events-none opacity-50">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal/10 rounded-full blur-[120px]" />
-      </div>
-
+    <section className="py-20 relative overflow-hidden bg-white">
+      {/* Background Aesthetic */}
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 [clip-path:polygon(20%_0%,100%_0%,100%_100%,0%_100%)] hidden lg:block" />
+      
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-          {/* Left: 3D Ribbon Logo/Badge Area */}
-          <div className="relative group">
-            <div className="absolute -inset-4 bg-primary/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={currentOffer.id}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20"
+          >
             
-            <div className="relative flex flex-col items-center">
-              <div className="absolute -top-1 w-[120%] flex justify-between px-2">
-                <div className="w-4 h-3 bg-red-900 [clip-path:polygon(100%_0,0_100%,100%_100%)]" />
-                <div className="w-4 h-3 bg-red-900 [clip-path:polygon(0_0,0_100%,100%_100%)]" />
+            {/* Left Side: Featured Image & Ribbon */}
+            <div className="relative w-full lg:w-1/2">
+              <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl">
+                <img 
+                  src={yachtImage} 
+                  alt={currentOffer.yacht.name} 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
               </div>
-              
-              <div className="bg-[#e31e24] text-white px-8 py-4 rounded-2xl shadow-2xl flex flex-col items-center border border-white/20 relative z-10">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-1 opacity-90">Exclusive</span>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 animate-pulse" />
-                  <span className="text-2xl font-black tracking-tighter">OFFERS</span>
-                </div>
+
+              {/* The 3D Ribbon - Integrated naturally onto the image corner */}
+              <div className="absolute -top-4 -right-4 z-20">
+                <motion.div 
+                  initial={{ scale: 0, rotate: 15 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  className="relative"
+                >
+                  {/* Ribbon 3D Ears */}
+                  <div className="absolute -left-2 top-0 w-2 h-4 bg-[#8b0000] [clip-path:polygon(100%_0,0_0,100%_100%)]" />
+                  <div className="absolute -right-2 top-0 w-2 h-4 bg-[#8b0000] [clip-path:polygon(0_0,100%_0,0_100%)]" />
+                  
+                  <div className="bg-[#e31e24] text-white px-6 py-3 rounded-b-xl shadow-xl flex flex-col items-center border border-white/20">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-90">Hot Offer</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-2xl font-black">
+                        {currentOffer.discount_type === 'percentage' 
+                          ? `${currentOffer.discount_value}%` 
+                          : `AED ${currentOffer.discount_value}`}
+                      </span>
+                      <span className="text-xs font-bold uppercase">OFF</span>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             </div>
-          </div>
 
-          {/* Center: Offers Info */}
-          <div className="flex-1 text-center lg:text-left">
-            <h2 className="text-2xl md:text-4xl font-black text-foreground mb-2 leading-tight">
-              {topOffer.title} <span className="text-primary">- Save {topOffer.discount_type === 'percentage' ? `${topOffer.discount_value}%` : `AED ${topOffer.discount_value}`}</span>
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-lg font-medium max-w-xl">
-              Special booking deal for <span className="text-primary font-bold">{topOffer.yacht.name}</span>. Experience luxury for an unbeatable price.
-            </p>
-          </div>
-
-          {/* Right: CTA */}
-          <div className="flex flex-col items-center gap-4">
-            <Link 
-              to={`/yachts/${encodeURIComponent(topOffer.yacht.name)}`}
-              className="bg-primary text-white px-10 py-4 rounded-full font-black text-sm uppercase tracking-widest hover:bg-primary/90 transition-all transform hover:scale-105 shadow-xl shadow-primary/20 group flex items-center gap-3"
-            >
-              Claim This Deal
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            
-            {offers.length > 1 && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-full border border-primary/10">
-                <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-bold text-primary/70 uppercase tracking-widest">
-                  + {offers.length - 1} more offers waiting
-                </span>
+            {/* Right Side: Content */}
+            <div className="w-full lg:w-1/2 space-y-6">
+              <div className="space-y-2">
+                <span className="text-primary font-bold tracking-widest uppercase text-sm block">Limited Time Deal</span>
+                <h2 className="text-3xl md:text-5xl font-black text-foreground leading-tight italic">
+                  {currentOffer.title}
+                </h2>
               </div>
-            )}
-          </div>
-        </div>
+              
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Experience the breathtaking <span className="text-foreground font-bold">{currentOffer.yacht.name}</span> at an exclusive rate. Whether it's a sunset cruise or a private party, this is your moment to sail in luxury.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+                <Button asChild className="rounded-full px-10 py-7 text-lg shadow-xl shadow-primary/20 hover:scale-105 transition-all group">
+                  <Link to={`/yachts/${encodeURIComponent(currentOffer.yacht.name)}`} className="flex items-center gap-3">
+                    Check Availability
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+
+                {offers.length > 1 && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1.5">
+                      {offers.map((_, idx) => (
+                        <div 
+                          key={idx}
+                          className={cn(
+                            "h-1.5 rounded-full transition-all duration-300",
+                            idx === activeIndex ? "w-8 bg-primary" : "w-1.5 bg-gray-200"
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      {activeIndex + 1} of {offers.length} Deals
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
+  );
+}
+
+function Button({ className, asChild, children, ...props }: any) {
+  const Comp = asChild ? 'span' : 'button';
+  return (
+    <Comp
+      className={cn(
+        "inline-flex items-center justify-center rounded-md font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-white hover:bg-primary/90 cursor-pointer",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </Comp>
   );
 }
