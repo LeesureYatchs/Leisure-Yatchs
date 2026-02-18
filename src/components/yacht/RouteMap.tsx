@@ -1,10 +1,13 @@
 import { useRef, useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Card } from '@/components/ui/card';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Ship, MapPin, Play, RefreshCw, Navigation } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-// Fix for default marker icon issues in React Leaflet
+// Fix for default marker icon issues
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -16,14 +19,15 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Custom Icons for landmarks
-const createCustomIcon = (imageUrl: string) => {
-  return new L.Icon({
-    iconUrl: imageUrl,
-    iconSize: [40, 40],
-    className: 'rounded-full border-2 border-white shadow-lg object-cover',
-  });
-};
+// Custom Yacht Icon
+const yachtIcon = L.divIcon({
+  html: `<div class="bg-primary p-2 rounded-full shadow-2xl border-2 border-white transform -rotate-45 animate-pulse">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H2v18z"></path></svg>
+         </div>`,
+  className: 'custom-yacht-icon',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20]
+});
 
 interface Landmark {
   name: string;
@@ -32,118 +36,192 @@ interface Landmark {
   image?: string;
 }
 
-const DUBAI_CENTER: [number, number] = [25.11, 55.15]; // Near Palm Jumeirah
+const DUBAI_CENTER: [number, number] = [25.11, 55.15];
 
 const LANDMARKS: Landmark[] = [
   {
     name: "Dubai Marina",
     position: [25.0768, 55.1413],
-    description: "Start your journey at the stunning Dubai Marina.",
+    description: "Start your journey at the stunning Dubai Marina canal.",
     image: "/dubai-marina-canal.jpeg"
   },
   {
-    name: "Ain Dubai (Blue Waters)",
+    name: "Ain Dubai",
     position: [25.0796, 55.1225],
-    description: "The world's largest observation wheel.",
+    description: "Sail past the world's largest observation wheel.",
     image: "/Blue-Water-Island.jpeg"
   },
   {
-    name: "Atlantis The Palm",
-    position: [25.1304, 55.1171],
-    description: "Iconic luxury hotel on the Palm.",
+    name: "Palm Jumeirah",
+    position: [25.1124, 55.1373],
+    description: "Navigate through the iconic man-made islands.",
     image: "/Atlantis.jpeg"
   },
   {
     name: "Burj Al Arab",
     position: [25.1412, 55.1853],
-    description: "The world's only 7-star hotel.",
+    description: "The ultimate 7-star landmark on the horizon.",
     image: "/burj-al-arab.jpeg"
-  },
-  {
-    name: "Lagoon / Palm Jumeirah",
-    position: [25.11, 55.13],
-    description: "Relax in the calm waters of the Palm Lagoon.",
   }
 ];
 
-// Sample route path (approximate coordinates)
 const ROUTE_PATH: [number, number][] = [
-    [25.0768, 55.1413], // Marina
-    [25.0775, 55.1380], // Marina Exit
-    [25.0796, 55.1225], // Blue Waters
-    [25.0900, 55.1200], // Up the coast
-    [25.1100, 55.1100], // Palm West Crescent
-    [25.1304, 55.1171], // Atlantis
-    [25.1350, 55.1400], // Palm East Crescent
-    [25.1412, 55.1853], // Burj Al Arab
-    [25.1300, 55.1600], // Return path
-    [25.1000, 55.1450],
-    [25.0768, 55.1413]  // Back to Marina
+    [25.0768, 55.1413], 
+    [25.0790, 55.1320], 
+    [25.0796, 55.1225], 
+    [25.0850, 55.1150],
+    [25.1000, 55.1100], 
+    [25.1124, 55.1373],
+    [25.1304, 55.1171], 
+    [25.1380, 55.1500],
+    [25.1412, 55.1853], 
+    [25.1350, 55.1800],
+    [25.1050, 55.1500],
+    [25.0768, 55.1413]
 ];
 
+// Map Hook to handle view resets
+function MapController({ center, zoom }: { center: [number, number], zoom: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
+}
+
 export function RouteMap() {
-    const [activeLandmark, setActiveLandmark] = useState<Landmark | null>(null);
+    const [animatedPath, setAnimatedPath] = useState<[number, number][]>([]);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [yachtPosition, setYachtPosition] = useState<[number, number]>(ROUTE_PATH[0]);
+
+    const startTour = () => {
+        setIsAnimating(true);
+        setAnimatedPath([]);
+        let index = 0;
+        
+        const interval = setInterval(() => {
+            if (index < ROUTE_PATH.length) {
+                const nextPoint = ROUTE_PATH[index];
+                setAnimatedPath(prev => [...prev, nextPoint]);
+                setYachtPosition(nextPoint);
+                index++;
+            } else {
+                clearInterval(interval);
+                setIsAnimating(false);
+            }
+        }, 800);
+    };
+
+    useEffect(() => {
+        startTour();
+    }, []);
 
     return (
-        <Card className="overflow-hidden border-2 border-primary/10 shadow-xl rounded-2xl h-[500px] w-full relative z-0">
-             <MapContainer 
+        <Card className="overflow-hidden border-2 border-primary/10 shadow-2xl rounded-[2rem] h-[600px] w-full relative group">
+            <div className="absolute top-6 left-6 z-[400] flex flex-col gap-3">
+                <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-primary/10 max-w-[240px]">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Navigation className="w-5 h-5 text-primary" />
+                        <h4 className="font-black text-foreground uppercase tracking-wider text-xs">Live Route Plotter</h4>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Visualizing the <span className="text-primary font-bold">Dubai Marina & Palm</span> circuit. Experience the iconic Dubai skyline from the ocean.
+                    </p>
+                    <Button 
+                        onClick={startTour} 
+                        size="sm" 
+                        disabled={isAnimating}
+                        className="w-full mt-4 bg-primary text-white rounded-xl h-10 font-bold text-[10px] uppercase tracking-widest"
+                    >
+                        {isAnimating ? <RefreshCw className="w-3 h-3 animate-spin mr-2" /> : <Play className="w-3 h-3 mr-2" />}
+                        {isAnimating ? 'Navigating...' : 'Restart Tour'}
+                    </Button>
+                </div>
+            </div>
+
+            <MapContainer 
                 center={DUBAI_CENTER} 
-                zoom={11} 
+                zoom={12} 
                 scrollWheelZoom={false} 
-                className="h-full w-full"
+                className="h-full w-full grayscale-[0.2]"
                 style={{ zIndex: 0 }}
-             >
+            >
                 <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" // Standard OSM
-                    // Use a darker/more premium looking map tile if possible, or stick to standard.
-                    // For premium: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" (CartoDB Positron)
                 />
                 
-                {/* Route Line */}
+                <MapController center={DUBAI_CENTER} zoom={12} />
+
+                {/* Main Animated Path */}
                 <Polyline 
-                    positions={ROUTE_PATH} 
+                    positions={animatedPath} 
                     pathOptions={{ 
-                        color: '#0077be', 
-                        weight: 4, 
-                        opacity: 0.7, 
-                        dashArray: '10, 10', 
-                        lineCap: 'round' 
+                        color: '#0ea5e9', 
+                        weight: 5, 
+                        opacity: 0.8, 
+                        lineCap: 'round',
+                        lineJoin: 'round'
                     }} 
                 />
 
-                {/* Landmarks */}
+                {/* Shadow/Track Path */}
+                <Polyline 
+                    positions={ROUTE_PATH} 
+                    pathOptions={{ 
+                        color: '#0284c7', 
+                        weight: 2, 
+                        opacity: 0.1, 
+                        dashArray: '5, 10'
+                    }} 
+                />
+
+                {/* Traveling Yacht Marker */}
+                <Marker position={yachtPosition} icon={yachtIcon}>
+                    <Popup className="premium-popup">
+                        <div className="text-center p-1">
+                            <Ship className="w-5 h-5 text-primary mx-auto mb-1" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-primary">Your Yacht</p>
+                        </div>
+                    </Popup>
+                </Marker>
+
+                {/* Iconic Landmarks */}
                 {LANDMARKS.map((landmark, idx) => (
                     <Marker 
                         key={idx} 
                         position={landmark.position}
-                        eventHandlers={{
-                            click: () => setActiveLandmark(landmark),
-                        }}
                     >
-                        <Popup className="custom-popup">
-                            <div className="text-center p-1">
-                                <h3 className="font-bold text-primary">{landmark.name}</h3>
-                                <p className="text-sm text-muted-foreground">{landmark.description}</p>
+                        <Popup className="premium-popup">
+                            <div className="w-48 overflow-hidden rounded-lg">
+                                {landmark.image && (
+                                    <div className="h-24 w-full bg-muted overflow-hidden">
+                                        <img src={landmark.image} alt={landmark.name} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <div className="p-3 text-center">
+                                    <h3 className="font-black text-primary uppercase text-xs tracking-tight mb-1">{landmark.name}</h3>
+                                    <p className="text-[10px] leading-tight text-muted-foreground">{landmark.description}</p>
+                                </div>
                             </div>
                         </Popup>
                     </Marker>
                 ))}
-             </MapContainer>
-             
-             {/* Overlay Legend */}
-            <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg z-[400] max-w-[200px]">
-                <h4 className="font-bold text-primary mb-2 text-sm">Tour Highlights</h4>
-                <ul className="text-xs space-y-1">
-                    {LANDMARKS.map(l => (
-                        <li key={l.name} className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                            {l.name}
-                        </li>
-                    ))}
-                </ul>
+            </MapContainer>
+
+            {/* Bottom Floating Stats */}
+            <div className="absolute bottom-6 right-6 z-[400] bg-slate-900/90 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 shadow-2xl flex items-center gap-6">
+                <div className="text-center border-r border-white/10 pr-6">
+                    <p className="text-[9px] text-white/40 uppercase tracking-widest font-black mb-1">Duration</p>
+                    <p className="text-white font-bold text-sm">2 - 4 Hours</p>
+                </div>
+                <div className="text-center">
+                    <p className="text-[9px] text-white/40 uppercase tracking-widest font-black mb-1">Stops</p>
+                    <p className="text-white font-bold text-sm">4 Major Sites</p>
+                </div>
             </div>
         </Card>
     );
 }
+
 
