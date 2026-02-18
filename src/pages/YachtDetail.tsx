@@ -50,6 +50,7 @@ export default function YachtDetailPage() {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [relatedYachts, setRelatedYachts] = useState<Yacht[]>([]);
   const [timeLeft, setTimeLeft] = useState('');
+  const [isOfferActive, setIsOfferActive] = useState(false);
 
   useEffect(() => {
     if (!offer) {
@@ -58,10 +59,44 @@ export default function YachtDetailPage() {
     }
 
     const timer = setInterval(() => {
-      // Split YYYY-MM-DD to avoid timezone shifts
       const [year, month, day] = offer.end_date.split('-').map(Number);
-      const end = new Date(year, month - 1, day, 23, 59, 59);
+      const [sYear, sMonth, sDay] = offer.start_date.split('-').map(Number);
+      
       const now = new Date();
+      
+      // Parse start time/date
+      const start = new Date(sYear, sMonth - 1, sDay);
+      if (offer.start_time) {
+        const [hours, minutes] = offer.start_time.split(':').map(Number);
+        start.setHours(hours, minutes, 0);
+      } else {
+        start.setHours(0, 0, 0);
+      }
+
+      // Parse end time/date
+      const end = new Date(year, month - 1, day);
+      if (offer.end_time) {
+        const [hours, minutes] = offer.end_time.split(':').map(Number);
+        end.setHours(hours, minutes, 59);
+      } else {
+        end.setHours(23, 59, 59);
+      }
+
+      // Not started yet
+      if (now < start) {
+        setIsOfferActive(false);
+        const diff = start.getTime() - now.getTime();
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        const timeString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        setTimeLeft(d > 0 ? `Starts in ${d}d ${timeString}` : `Starts in ${timeString}`);
+        return;
+      }
+
+      setIsOfferActive(true);
       const diff = end.getTime() - now.getTime();
 
       if (diff <= 0) {
@@ -76,7 +111,7 @@ export default function YachtDetailPage() {
       const s = Math.floor((diff % (1000 * 60)) / 1000);
 
       const timeString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-      setTimeLeft(d > 0 ? `${d}d ${timeString}` : timeString);
+      setTimeLeft(d > 0 ? `Ends in ${d}d ${timeString}` : `Ends in ${timeString}`);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -179,8 +214,9 @@ export default function YachtDetailPage() {
           .select('*')
           .eq('yacht_id', resolvedYacht.id)
           .eq('status', 'active')
-          .lte('start_date', today)
           .gte('end_date', today)
+          .order('start_date', { ascending: true })
+          .limit(1)
           .maybeSingle();
 
         if (!offerError && offerData) {
@@ -630,7 +666,7 @@ export default function YachtDetailPage() {
                     <div className="flex items-baseline gap-2">
                       {loading ? (
                         <Skeleton className="h-10 w-32" />
-                      ) : offer ? (
+                      ) : (offer && isOfferActive) ? (
                           <>
                           <p className="text-3xl font-bold text-primary">
                             AED {
@@ -665,13 +701,13 @@ export default function YachtDetailPage() {
                       yachtId={yacht.id}
                       yachtName={yacht.name}
                       hourlyPrice={
-                        offer
+                        (offer && isOfferActive)
                           ? offer.discount_type === 'percentage'
                             ? yacht.hourly_price * (1 - offer.discount_value / 100)
                             : Math.max(0, yacht.hourly_price - offer.discount_value)
                           : yacht.hourly_price
                       }
-                      originalPrice={offer ? yacht.hourly_price : undefined}
+                      originalPrice={(offer && isOfferActive) ? yacht.hourly_price : undefined}
                       maxCapacity={yacht.capacity}
                       minimumHours={yacht.minimum_hours || 2}
                       onCancel={() => setShowBookingForm(false)}

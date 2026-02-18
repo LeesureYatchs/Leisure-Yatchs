@@ -36,6 +36,8 @@ interface OfferFormData {
   discount_value: number;
   start_date: string;
   end_date: string;
+  start_time: string;
+  end_time: string;
   status: OfferStatus;
 }
 
@@ -46,6 +48,8 @@ const defaultFormData: OfferFormData = {
   discount_value: 10,
   start_date: format(new Date(), 'yyyy-MM-dd'),
   end_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+  start_time: '',
+  end_time: '',
   status: 'active',
 };
 
@@ -118,6 +122,8 @@ export default function AdminOffers() {
         discount_value: offer.discount_value,
         start_date: offer.start_date,
         end_date: offer.end_date,
+        start_time: offer.start_time || '',
+        end_time: offer.end_time || '',
         status: offer.status,
       });
     } else {
@@ -142,11 +148,13 @@ export default function AdminOffers() {
         discount_value: formData.discount_value,
         start_date: formData.start_date,
         end_date: formData.end_date,
+        start_time: formData.start_time || '00:00:00',
+        end_time: formData.end_time || '23:59:59',
         status: formData.status,
       };
 
       if (editingOffer) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('offers')
           .update(offerData)
           .eq('id', editingOffer.id);
@@ -154,7 +162,7 @@ export default function AdminOffers() {
         if (error) throw error;
         toast({ title: 'Offer updated successfully' });
       } else {
-        const { error } = await supabase.from('offers').insert(offerData);
+        const { error } = await (supabase as any).from('offers').insert(offerData);
 
         if (error) throw error;
         toast({ title: 'Offer created successfully' });
@@ -198,7 +206,7 @@ export default function AdminOffers() {
     if (!confirm(`Are you sure you want to ${action} this offer?`)) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('offers')
         .update({ status: newStatus })
         .eq('id', offer.id);
@@ -334,6 +342,35 @@ export default function AdminOffers() {
                         className="mt-1.5"
                         required
                         />
+                    </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="start_time">Start Time (Optional)</Label>
+                        <Input
+                        id="start_time"
+                        type="time"
+                        value={formData.start_time}
+                        onChange={(e) =>
+                            setFormData({ ...formData, start_time: e.target.value })
+                        }
+                        className="mt-1.5"
+                        />
+                        <p className="text-[10px] text-muted-foreground mt-1 text-primary">Leave empty for 12:00 AM</p>
+                    </div>
+                    <div>
+                        <Label htmlFor="end_time">End Time (Optional)</Label>
+                        <Input
+                        id="end_time"
+                        type="time"
+                        value={formData.end_time}
+                        onChange={(e) =>
+                            setFormData({ ...formData, end_time: e.target.value })
+                        }
+                        className="mt-1.5"
+                        />
+                        <p className="text-[10px] text-muted-foreground mt-1 text-destructive">Leave empty for 11:59 PM</p>
                     </div>
                     </div>
                     <div>

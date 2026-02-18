@@ -15,6 +15,7 @@ interface YachtCardProps {
 export function YachtCard({ yacht }: YachtCardProps) {
   const [offer, setOffer] = useState<Offer | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
+  const [isOfferActive, setIsOfferActive] = useState(false);
   const defaultImage = 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80';
   const imageUrl = yacht.images && yacht.images.length > 0 ? yacht.images[0] : defaultImage;
 
@@ -26,10 +27,44 @@ export function YachtCard({ yacht }: YachtCardProps) {
     if (!offer) return;
 
     const calculateTimeLeft = () => {
-      // Split YYYY-MM-DD to avoid timezone shifts from 'new Date(string)'
       const [year, month, day] = offer.end_date.split('-').map(Number);
-      const end = new Date(year, month - 1, day, 23, 59, 59);
+      const [sYear, sMonth, sDay] = offer.start_date.split('-').map(Number);
+      
       const now = new Date();
+      
+      // Parse start time/date
+      const start = new Date(sYear, sMonth - 1, sDay);
+      if (offer.start_time) {
+        const [hours, minutes] = offer.start_time.split(':').map(Number);
+        start.setHours(hours, minutes, 0);
+      } else {
+        start.setHours(0, 0, 0);
+      }
+
+      // Parse end time/date
+      const end = new Date(year, month - 1, day);
+      if (offer.end_time) {
+        const [hours, minutes] = offer.end_time.split(':').map(Number);
+        end.setHours(hours, minutes, 59);
+      } else {
+        end.setHours(23, 59, 59);
+      }
+
+      // Not started yet
+      if (now < start) {
+        setIsOfferActive(false);
+        const diff = start.getTime() - now.getTime();
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        const timeString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        setTimeLeft(d > 0 ? `Starts in ${d}d ${timeString}` : `Starts in ${timeString}`);
+        return;
+      }
+
+      setIsOfferActive(true);
       const diff = end.getTime() - now.getTime();
 
       if (diff <= 0) {
@@ -43,7 +78,7 @@ export function YachtCard({ yacht }: YachtCardProps) {
       const s = Math.floor((diff % (1000 * 60)) / 1000);
 
       const timeString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-      setTimeLeft(d > 0 ? `${d}d ${timeString}` : timeString);
+      setTimeLeft(d > 0 ? `Ends in ${d}d ${timeString}` : `Ends in ${timeString}`);
     };
 
     calculateTimeLeft();
@@ -59,8 +94,9 @@ export function YachtCard({ yacht }: YachtCardProps) {
       .select('*')
       .eq('yacht_id', yacht.id)
       .eq('status', 'active')
-      .lte('start_date', today)
-      .gte('end_date', today)
+      .gte('end_date', today) // Show if it hasn't ended yet
+      .order('start_date', { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (data) {
@@ -158,7 +194,7 @@ export function YachtCard({ yacht }: YachtCardProps) {
           <div className="flex items-center justify-between">
             <div>
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Starting Hourly</span>
-              {offer ? (
+              {offer && isOfferActive ? (
                 <div className="flex flex-col">
                   <p className="text-lg font-black text-primary">
                     AED {(
