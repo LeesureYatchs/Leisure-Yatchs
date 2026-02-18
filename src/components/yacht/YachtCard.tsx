@@ -5,7 +5,7 @@ import { supabase, Yacht, Offer } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Ruler, ArrowRight, Percent, Tag, Crown, Star, Gem, Anchor } from 'lucide-react';
+import { Users, Ruler, Bath, ArrowRight, Percent, Tag, Crown, Star, Gem, Anchor } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface YachtCardProps {
@@ -103,14 +103,18 @@ export function YachtCard({ yacht }: YachtCardProps) {
         </div>
 
         <CardContent className="p-6">
-          <div className="flex items-center gap-4 mb-5 pb-4 border-b border-primary/5">
-            <div className="flex items-center gap-1.5 text-muted-foreground bg-primary/5 px-2 py-1 rounded-md">
+          <div className="flex items-center gap-2 mb-5 pb-4 border-b border-primary/5 overflow-x-auto">
+            <div className="flex items-center gap-1.5 text-muted-foreground bg-primary/5 px-2 py-1 rounded-md shrink-0">
               <Users className="w-3.5 h-3.5 text-primary" />
               <span className="text-xs font-semibold">{yacht.capacity} Guests</span>
             </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground bg-primary/5 px-2 py-1 rounded-md">
+            <div className="flex items-center gap-1.5 text-muted-foreground bg-primary/5 px-2 py-1 rounded-md shrink-0">
               <Ruler className="w-3.5 h-3.5 text-primary" />
               <span className="text-xs font-semibold">{yacht.feet} ft</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-muted-foreground bg-primary/5 px-2 py-1 rounded-md shrink-0">
+              <Bath className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-semibold">{yacht.restrooms || 1} Bath</span>
             </div>
           </div>
 

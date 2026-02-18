@@ -26,6 +26,7 @@ import {
   Users,
   Ruler,
   Home,
+  Bath,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -447,6 +448,10 @@ export default function YachtDetailPage() {
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Home className="w-5 h-5 text-primary" />
                         <span>{yacht?.cabins} Cabins</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Bath className="w-5 h-5 text-primary" />
+                        <span>{yacht?.restrooms} Restrooms</span>
                       </div>
                     </div>
                   </>

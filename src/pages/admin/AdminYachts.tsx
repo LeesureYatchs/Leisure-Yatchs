@@ -35,6 +35,7 @@ interface YachtFormData {
   feet: number;
   capacity: number;
   cabins: number;
+  restrooms: number;
   hourly_price: number;
   minimum_hours: number;
   description: string;
@@ -53,6 +54,7 @@ const defaultFormData: YachtFormData = {
   feet: 50,
   capacity: 10,
   cabins: 2,
+  restrooms: 1,
   hourly_price: 500,
   minimum_hours: 2,
   description: '',
@@ -225,6 +227,7 @@ export default function AdminYachts() {
         feet: yacht.feet,
         capacity: yacht.capacity,
         cabins: yacht.cabins,
+        restrooms: yacht.restrooms || 1,
         hourly_price: yacht.hourly_price,
         minimum_hours: yacht.minimum_hours || 2,
         description: yacht.description || '',
@@ -335,6 +338,7 @@ export default function AdminYachts() {
         feet: formData.feet,
         capacity: formData.capacity,
         cabins: formData.cabins,
+        restrooms: formData.restrooms,
         hourly_price: formData.hourly_price,
         minimum_hours: formData.minimum_hours,
         description: formData.description || null,
@@ -538,6 +542,22 @@ export default function AdminYachts() {
                             setFormData({
                               ...formData,
                               cabins: Number(e.target.value),
+                            })
+                          }
+                          className="mt-1.5"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="restrooms">Restrooms</Label>
+                        <Input
+                          id="restrooms"
+                          type="number"
+                          value={formData.restrooms}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              restrooms: Number(e.target.value),
                             })
                           }
                           className="mt-1.5"

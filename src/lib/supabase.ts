@@ -9,6 +9,8 @@ export interface Yacht {
   feet: number;
   capacity: number;
   cabins: number;
+  bedrooms: number;
+  restrooms: number;
   hourly_price: number;
   minimum_hours: number;
   description: string | null;
