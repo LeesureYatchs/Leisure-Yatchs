@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { supabase, Yacht, Offer, TripItinerary } from '@/lib/supabase';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { BookingForm } from '@/components/yacht/BookingForm';
@@ -35,6 +36,7 @@ import {
   Ship,
   Clock,
   Play,
+  X,
 } from 'lucide-react';
 import ShipLoader from '@/components/ui/ShipLoader';
 import { SocialProofPopup } from '@/components/ui/SocialProofPopup';
@@ -333,54 +335,112 @@ export default function YachtDetailPage() {
                   }
 
                   return (
-                    <img
-                      src={currentMedia}
-                      alt={yacht?.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <div 
+                      className="w-full h-full cursor-zoom-in group relative"
+                      onClick={() => setIsVideoModalOpen(true)}
+                    >
+                      <img
+                        src={currentMedia}
+                        alt={yacht?.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 bg-white/20 backdrop-blur-md p-3 rounded-full transition-opacity">
+                          <Users className="w-6 h-6 text-white" />
+                        </div>
+                      </div>
+                    </div>
                   );
                 })()
               )}
             </div>
 
-            {/* Video Modal */}
+            {/* Media Modal (Images & Videos) */}
             <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
-              <DialogContent className="w-auto h-auto max-w-[95vw] max-h-[95vh] p-0 bg-transparent border-none shadow-none flex items-center justify-center focus:outline-none">
+              <DialogContent className="max-w-full h-full p-0 bg-slate-950/98 border-none flex flex-col items-center justify-center">
                  {(() => {
-                    const currentMedia = [...images, ...(yacht?.videos || [])][selectedImage];
+                    const allMedia = [...images, ...(yacht?.videos || [])];
+                    const currentMedia = allMedia[selectedImage];
                     const isVideo = yacht?.videos?.includes(currentMedia);
                     
-                    if (isVideo) {
-                       if (currentMedia.includes('youtube') || currentMedia.includes('youtu.be')) {
-                           const embedUrl = currentMedia.includes('watch?v=') 
-                            ? currentMedia.replace('watch?v=', 'embed/') 
-                            : currentMedia;
-                            return (
-                              <iframe
-                                key={currentMedia}
-                                src={`${embedUrl}?autoplay=1`}
-                                className="w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                title="Yacht Video"
-                              />
-                            );
-                       }
-                       return (
-                          <video 
-                            key={currentMedia}
-                            controls 
-                            autoPlay
-                            controlsList="nodownload"
-                            onContextMenu={(e) => e.preventDefault()}
-                            className="w-full h-full object-contain"
+                    return (
+                      <div className="relative w-full h-full flex items-center justify-center p-4">
+                        {/* Close Button */}
+                        <button 
+                          onClick={() => setIsVideoModalOpen(false)}
+                          className="absolute top-6 right-6 z-50 p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full transition-colors"
+                        >
+                          <X className="w-6 h-6 text-white" />
+                        </button>
+
+                        {/* Navigation: Previous */}
+                        {allMedia.length > 1 && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedImage((prev) => (prev - 1 + allMedia.length) % allMedia.length);
+                            }}
+                            className="absolute left-6 z-50 p-4 bg-white/10 hover:bg-primary/80 backdrop-blur-md rounded-full text-white transition-all transform hover:scale-110"
                           >
-                            <source src={currentMedia} />
-                            Your browser does not support the video tag.
-                          </video>
-                       );
-                    }
-                    return null;
+                            <ArrowLeft className="w-6 h-6" />
+                          </button>
+                        )}
+
+                        {/* Navigation: Next */}
+                        {allMedia.length > 1 && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedImage((prev) => (prev + 1) % allMedia.length);
+                            }}
+                            className="absolute right-6 z-50 p-4 bg-white/10 hover:bg-primary/80 backdrop-blur-md rounded-full text-white transition-all transform hover:scale-110"
+                          >
+                            <ArrowRight className="w-6 h-6" />
+                          </button>
+                        )}
+
+                        {/* Content Body */}
+                        <div className="w-full max-w-5xl max-h-[85vh] flex items-center justify-center">
+                          {isVideo ? (
+                             currentMedia.includes('youtube') || currentMedia.includes('youtu.be') ? (
+                                <iframe
+                                  key={currentMedia}
+                                  src={`${currentMedia.replace('watch?v=', 'embed/')}?autoplay=1`}
+                                  className="w-full aspect-video rounded-xl shadow-2xl"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                             ) : (
+                                <video 
+                                  key={currentMedia}
+                                  controls 
+                                  autoPlay
+                                  className="max-w-full max-h-[80vh] object-contain rounded-xl"
+                                >
+                                  <source src={currentMedia} />
+                                </video>
+                             )
+                          ) : (
+                            <motion.img 
+                              key={currentMedia}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3 }}
+                              src={currentMedia} 
+                              alt="Yacht Preview" 
+                              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl shadow-primary/10"
+                            />
+                          )}
+                        </div>
+
+                        {/* Counter (Optional but clean) */}
+                        <div className="absolute bottom-10 px-6 py-2 bg-white/10 backdrop-blur-md rounded-full text-white/50 text-xs font-black tracking-widest uppercase">
+                          {selectedImage + 1} / {allMedia.length}
+                        </div>
+                      </div>
+                    );
                  })()}
               </DialogContent>
             </Dialog>
@@ -410,6 +470,8 @@ export default function YachtDetailPage() {
                         <img
                           src={media}
                           alt={`${yacht?.name} ${index + 1}`}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover"
                         />
                       )}

@@ -16,6 +16,7 @@ export function HeroSection() {
           muted
           loop
           playsInline
+          preload="auto"
           className="w-full h-full object-cover"
           poster="https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=1920&q=80"
         >

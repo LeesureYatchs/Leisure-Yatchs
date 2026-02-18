@@ -61,11 +61,16 @@ export function SpecialOfferBadge() {
             
             {/* Left Side: Featured Image & Ribbon */}
             <div className="relative w-full lg:w-1/2">
-              <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl">
-                <img 
+              <div className="relative aspect-[16/10] sm:aspect-[16/9] rounded-[2.5rem] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] bg-gray-100">
+                <motion.img 
+                  initial={{ scale: 1.1 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 1.5 }}
                   src={yachtImage} 
                   alt={currentOffer.yacht.name} 
-                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
               </div>
