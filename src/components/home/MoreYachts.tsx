@@ -15,16 +15,32 @@ export function MoreYachts() {
 
   const fetchMoreYachts = async () => {
     try {
-      // Fetch the next 3 yachts (offset by 3) to show different ones
       const { data, error } = await supabase
         .from('yachts')
         .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: true }) // Different order to see different yachts
-        .limit(3);
+        .eq('status', 'active');
 
       if (error) throw error;
-      setYachts(data as Yacht[] || []);
+      
+      const yachtData = (data as Yacht[]) || [];
+      if (yachtData.length > 0) {
+        // Group by category and pick one random from each
+        const luxury = yachtData.filter(y => y.category === 'Luxury').sort(() => 0.5 - Math.random())[0];
+        const premium = yachtData.filter(y => y.category === 'Premium').sort(() => 0.5 - Math.random())[0];
+        const superY = yachtData.filter(y => y.category === 'Super').sort(() => 0.5 - Math.random())[0];
+
+        // Combine only the ones that exist
+        const selected = [luxury, premium, superY].filter(Boolean) as Yacht[];
+        
+        // If we have fewer than 3 (categories might be empty), fill with other random active yachts
+        if (selected.length < 3) {
+          const remaining = yachtData.filter(y => !selected.find(s => s.id === y.id))
+            .sort(() => 0.5 - Math.random());
+          selected.push(...remaining.slice(0, 3 - selected.length));
+        }
+
+        setYachts(selected);
+      }
     } catch (error) {
       console.error('Error fetching more yachts:', error);
     } finally {

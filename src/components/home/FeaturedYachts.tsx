@@ -18,11 +18,15 @@ export function FeaturedYachts() {
       const { data, error } = await supabase
         .from('yachts')
         .select('*')
-        .eq('status', 'active')
-        .limit(3);
+        .eq('status', 'active');
 
       if (error) throw error;
-      setYachts(data as Yacht[] || []);
+      
+      if (data) {
+        // Shuffle and take top 3
+        const shuffled = [...data].sort(() => 0.5 - Math.random());
+        setYachts(shuffled.slice(0, 3) as Yacht[]);
+      }
     } catch (error) {
       console.error('Error fetching yachts:', error);
     } finally {
