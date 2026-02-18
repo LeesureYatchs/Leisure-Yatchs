@@ -21,6 +21,7 @@ import {
   Sparkles,
   Search,
   ChevronRight,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ShipLoader from '@/components/ui/ShipLoader';
@@ -51,10 +52,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
+  const [visitorCount, setVisitorCount] = useState(0);
 
   useEffect(() => {
     fetchPendingCounts();
     fetchLogs();
+    fetchVisitorCount();
     handleDailyGreeting();
 
     // Subscribe to booking, enquiry, and review changes
@@ -125,6 +128,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       .order('created_at', { ascending: false })
       .limit(5);
     if (data) setLogs(data);
+  };
+
+  const fetchVisitorCount = async () => {
+    // Get count of unique visitors
+    const { count } = await (supabase as any)
+      .from('visitor_logs')
+      .select('*', { count: 'exact', head: true });
+    
+    if (count !== null) setVisitorCount(count);
   };
 
   const handleDailyGreeting = async () => {
@@ -281,6 +293,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           <div className="flex items-center gap-4">
+            
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100 hidden xl:flex">
+              <Users className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-wider tabular-nums">
+                {visitorCount} Visitors
+              </span>
+            </div>
+
             <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">
             <Sparkles className="w-4 h-4 text-primary animate-pulse" />
             <span className="text-xs font-bold text-primary uppercase tracking-wider tabular-nums">

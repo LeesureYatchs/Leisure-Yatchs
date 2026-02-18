@@ -2,12 +2,47 @@ import { ReactNode } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { PageTransition } from '../ui/PageTransition';
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useLocation } from 'react-router-dom';
 
 interface PublicLayoutProps {
   children: ReactNode;
 }
 
 export function PublicLayout({ children }: PublicLayoutProps) {
+  const location = useLocation();
+
+  useEffect(() => {
+    const logVisitor = async () => {
+      try {
+        console.log('Logging visitor...');
+        // Using ipify for better reliability
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        const userIp = ipData.ip;
+
+        if (userIp) {
+          const { error } = await (supabase as any).from('visitor_logs').upsert({
+            ip_address: userIp,
+            user_agent: navigator.userAgent,
+            page_visited: window.location.pathname,
+            last_visited_at: new Date().toISOString()
+          }, { 
+            onConflict: 'ip_address' 
+          });
+
+          if (error) console.error('Supabase Sync Error:', error.message);
+          else console.log('Visitor Logged Successfully!');
+        }
+      } catch (error) {
+        console.error('Visitor logging failed:', error);
+      }
+    };
+
+    logVisitor();
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
