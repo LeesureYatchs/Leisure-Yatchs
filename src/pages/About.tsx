@@ -46,7 +46,7 @@ export default function AboutPage() {
                 Redefining Luxury on the
                 <span className="text-primary"> Arabian Waters</span>
               </h2>
-              <div className="space-y-4 text-muted-foreground leading-relaxed">
+              <div className="space-y-4 text-muted-foreground leading-relaxed text-justify">
                 <p>
                   LeisureYatchs was born from a passion for the sea and a commitment
                   to delivering unparalleled luxury experiences. Based in the heart of

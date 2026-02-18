@@ -576,7 +576,7 @@ export default function YachtDetailPage() {
               {yacht?.description && (
                 <div>
                   <h2 className="text-xl font-semibold mb-4">About This Yacht</h2>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed text-justify">
                     {yacht.description}
                   </p>
                 </div>
