@@ -3,6 +3,7 @@ import { Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Anchor,
   LayoutDashboard,
@@ -16,9 +17,15 @@ import {
   Route,
   Mail,
   MessageSquare,
+  Bell,
+  Sparkles,
+  Search,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ShipLoader from '@/components/ui/ShipLoader';
+import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -37,13 +44,18 @@ const navItems = [
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, isAdmin, loading, signOut } = useAuth();
   const location = useLocation();
+  const currentNavItem = navItems.find(item => item.href === location.pathname) || navItems[0];
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
   const [pendingEnquiriesCount, setPendingEnquiriesCount] = useState(0);
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => {
     fetchPendingCounts();
+    fetchLogs();
+    handleDailyGreeting();
 
     // Subscribe to booking, enquiry, and review changes
     const bookingsChannel = supabase
@@ -106,6 +118,44 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     setPendingReviewsCount(rCount || 0);
   };
 
+  const fetchLogs = async () => {
+    const { data } = await supabase
+      .from('system_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (data) setLogs(data);
+  };
+
+  const handleDailyGreeting = async () => {
+    const now = new Date();
+    const hours = now.getHours();
+    let greeting = '';
+    
+    if (hours < 12) greeting = 'Good Morning';
+    else if (hours < 17) greeting = 'Good Afternoon';
+    else greeting = 'Good Evening';
+
+    const todayStr = format(now, 'yyyy-MM-dd');
+    
+    // Check if we already sent a greeting today
+    const { data: existing } = await supabase
+      .from('system_logs')
+      .select('*')
+      .eq('type', 'greeting')
+      .gte('created_at', `${todayStr}T00:00:00Z`)
+      .limit(1);
+
+    if (!existing || existing.length === 0) {
+      // Send greeting to DB to keep it alive
+      await (supabase as any).from('system_logs').insert({
+        type: 'greeting',
+        message: `${greeting} Admin! System sync successful.`,
+      });
+      fetchLogs();
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -152,7 +202,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="p-6 border-b hidden lg:block">
+        <div className="h-24 px-6 border-b hidden lg:flex items-center">
           <Link to="/admin/dashboard" className="flex items-center gap-2">
             <img src="/leisureyatch.png" alt="LeisureYatchs" className="h-10 w-auto object-contain" />
             <span className="font-bold text-xl">LeisureYatchs</span>
@@ -216,6 +266,110 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main Content */}
       <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
+        {/* Top Header for Desktop */}
+        <header className="hidden lg:flex h-24 bg-white border-b items-center justify-between px-8 gap-4 sticky top-0 z-30">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/10 shadow-sm">
+              <currentNavItem.icon className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                {currentNavItem.label}
+              </h2>
+              <p className="text-xs text-slate-400 font-medium"> Admin Portal / {currentNavItem.label}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">
+            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            <span className="text-xs font-bold text-primary uppercase tracking-wider tabular-nums">
+              Sync Active
+            </span>
+          </div>
+
+          <div className="relative">
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 hover:bg-slate-50 rounded-full transition-colors relative group"
+            >
+              <Bell className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
+            </button>
+
+            <AnimatePresence>
+              {showNotifications && (
+                <>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-30"
+                    onClick={() => setShowNotifications(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border z-40 overflow-hidden"
+                  >
+                    <div className="p-4 border-b bg-slate-50/50 flex items-center justify-between">
+                      <h4 className="font-bold text-sm">Notifications</h4>
+                      <Badge variant="outline" className="text-[10px]">Recent Activity</Badge>
+                    </div>
+                    <div className="max-h-[350px] overflow-y-auto">
+                      {logs.length > 0 ? (
+                        logs.map((log) => (
+                          <div key={log.id} className="p-4 border-b last:border-0 hover:bg-slate-50 transition-colors">
+                            <div className="flex gap-3">
+                              <div className={cn(
+                                "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                                log.type === 'greeting' ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"
+                              )}>
+                                {log.type === 'greeting' ? <Sparkles className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium text-slate-800 leading-tight">
+                                  {log.message}
+                                </p>
+                                <p className="text-[10px] text-slate-400">
+                                  {format(new Date(log.created_at), 'HH:mm • d MMM')}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center text-slate-400">
+                          <p className="text-xs">No notifications yet</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 bg-slate-50 text-center border-t">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        System Active & Healthy
+                      </p>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="h-4 w-px bg-slate-200 mx-1" />
+          
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-xs font-bold text-slate-800">Administrator</p>
+              <p className="text-[10px] text-slate-500">{user?.email}</p>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs border border-primary/20">
+              {user?.email?.[0].toUpperCase()}
+            </div>
+          </div>
+        </div>
+      </header>
+
         <div className="p-6 lg:p-8">{children}</div>
       </main>
     </div>
