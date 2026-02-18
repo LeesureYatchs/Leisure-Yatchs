@@ -28,7 +28,7 @@ export function YachtCard({ yacht, specialBadge }: YachtCardProps) {
   useEffect(() => {
     if (!offer) return;
 
-    const calculateTimeLeft = () => {
+    const calculateTimeLeft = async () => {
       const [year, month, day] = offer.end_date.split('-').map(Number);
       const [sYear, sMonth, sDay] = offer.start_date.split('-').map(Number);
       
@@ -66,14 +66,23 @@ export function YachtCard({ yacht, specialBadge }: YachtCardProps) {
         return;
       }
 
-      setIsOfferActive(true);
       const diff = end.getTime() - now.getTime();
 
       if (diff <= 0) {
+        setIsOfferActive(false);
         setTimeLeft('Expired');
+        
+        // Auto-deactivate in database if still marked active
+        if (offer.status === 'active') {
+          await (supabase as any)
+            .from('offers')
+            .update({ status: 'inactive' })
+            .eq('id', offer.id);
+        }
         return;
       }
 
+      setIsOfferActive(true);
       const d = Math.floor(diff / (1000 * 60 * 60 * 24));
       const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -96,7 +105,7 @@ export function YachtCard({ yacht, specialBadge }: YachtCardProps) {
       .select('*')
       .eq('yacht_id', yacht.id)
       .eq('status', 'active')
-      .gte('end_date', today) // Show if it hasn't ended yet
+      .gte('end_date', today) 
       .order('start_date', { ascending: true })
       .limit(1)
       .maybeSingle();
@@ -154,7 +163,7 @@ export function YachtCard({ yacht, specialBadge }: YachtCardProps) {
             </motion.div>
           )}
 
-          {offer && (
+          {offer && isOfferActive && (
             <div className="absolute top-0 right-4 z-30 pointer-events-none drop-shadow-xl">
               {/* The 3D Ribbon Container */}
               <motion.div 

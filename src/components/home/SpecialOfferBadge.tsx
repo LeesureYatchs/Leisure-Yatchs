@@ -27,15 +27,43 @@ export function SpecialOfferBadge() {
 
   const fetchActiveOffers = async () => {
     const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+
     const { data } = await supabase
       .from('offers')
       .select('*, yacht:yachts(*)')
       .eq('status', 'active')
       .gte('end_date', today)
-      .limit(5);
+      .limit(10);
 
     if (data) {
-      setOffers(data as (Offer & { yacht: Yacht })[]);
+      // Precise filtering in frontend
+      const activeOffers = (data as (Offer & { yacht: Yacht })[]).filter(offer => {
+        const [year, month, day] = offer.end_date.split('-').map(Number);
+        const end = new Date(year, month - 1, day);
+        
+        if (offer.end_time) {
+          const [hours, minutes] = offer.end_time.split(':').map(Number);
+          end.setHours(hours, minutes, 59);
+        } else {
+          end.setHours(23, 59, 59);
+        }
+        
+        const isNotExpired = now < end;
+
+        // Auto-deactivate if expired
+        if (!isNotExpired && offer.status === 'active') {
+          (supabase as any)
+            .from('offers')
+            .update({ status: 'inactive' })
+            .eq('id', offer.id)
+            .then(); // Fire and forget
+        }
+
+        return isNotExpired;
+      });
+
+      setOffers(activeOffers.slice(0, 5));
     }
   };
 

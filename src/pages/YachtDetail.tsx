@@ -61,7 +61,7 @@ export default function YachtDetailPage() {
       return;
     }
 
-    const timer = setInterval(() => {
+    const timer = setInterval(async () => {
       const [year, month, day] = offer.end_date.split('-').map(Number);
       const [sYear, sMonth, sDay] = offer.start_date.split('-').map(Number);
       
@@ -99,14 +99,24 @@ export default function YachtDetailPage() {
         return;
       }
 
-      setIsOfferActive(true);
       const diff = end.getTime() - now.getTime();
 
       if (diff <= 0) {
+        setIsOfferActive(false);
         setTimeLeft('Expired');
         clearInterval(timer);
+        
+        // Auto-deactivate in database if still marked active
+        if (offer.status === 'active') {
+          await (supabase as any)
+            .from('offers')
+            .update({ status: 'inactive' })
+            .eq('id', offer.id);
+        }
         return;
       }
+
+      setIsOfferActive(true);
 
       const d = Math.floor(diff / (1000 * 60 * 60 * 24));
       const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -677,7 +687,7 @@ export default function YachtDetailPage() {
                 <WeatherWidget />
 
                 {/* Dynamic Offer Countdown Timer */}
-                {offer && (
+                {offer && isOfferActive && (
                    <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-3 text-white shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-700 mb-4">
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-2">
