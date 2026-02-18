@@ -47,16 +47,27 @@ export default function YachtsPage() {
     };
   }, []);
 
+  const shuffleArray = (array: any[]) => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
   const fetchYachts = async () => {
     try {
       const { data, error } = await supabase
         .from('yachts')
         .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .eq('status', 'active');
 
       if (error) throw error;
-      setYachts(data as Yacht[] || []);
+      
+      // Shuffle the data for a fresh order on every refresh
+      const randomizedData = data ? shuffleArray(data) : [];
+      setYachts(randomizedData as Yacht[]);
     } catch (error) {
       console.error('Error fetching yachts:', error);
     } finally {
