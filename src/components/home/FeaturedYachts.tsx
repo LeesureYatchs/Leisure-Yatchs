@@ -67,9 +67,19 @@ export function FeaturedYachts() {
           </div>
         ) : yachts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {yachts.map((yacht) => (
-              <YachtCard key={yacht.id} yacht={yacht} />
-            ))}
+            {(() => {
+              const randomIndex = Math.floor(Math.random() * yachts.length);
+              const labels = ["Captain's Pick", "Most Loved", "Top Rated"];
+              const randomLabel = labels[Math.floor(Math.random() * labels.length)];
+              
+              return yachts.map((yacht, index) => (
+                <YachtCard 
+                  key={yacht.id} 
+                  yacht={yacht} 
+                  specialBadge={index === randomIndex ? randomLabel : undefined}
+                />
+              ));
+            })()}
           </div>
         ) : (
           <div className="text-center py-16">

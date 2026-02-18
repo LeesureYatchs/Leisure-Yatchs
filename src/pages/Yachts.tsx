@@ -208,9 +208,20 @@ export default function YachtsPage() {
             </div>
           ) : filteredYachts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredYachts.map((yacht) => (
-                <YachtCard key={yacht.id} yacht={yacht} />
-              ))}
+              {(() => {
+                // Determine which yacht gets a badge (randomly select one index)
+                const randomIndex = filteredYachts.length > 3 ? Math.floor(Math.random() * filteredYachts.length) : -1;
+                const labels = ["Captain's Pick", "Most Loved", "Top Rated"];
+                const randomLabel = labels[Math.floor(Math.random() * labels.length)];
+
+                return filteredYachts.map((yacht, index) => (
+                  <YachtCard 
+                    key={yacht.id} 
+                    yacht={yacht} 
+                    specialBadge={index === randomIndex ? randomLabel : undefined}
+                  />
+                ));
+              })()}
             </div>
           ) : (
             <div className="text-center py-16">

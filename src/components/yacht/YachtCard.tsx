@@ -12,9 +12,10 @@ import { optimizeImage } from '@/lib/image-optimizer';
 
 interface YachtCardProps {
   yacht: Yacht;
+  specialBadge?: string;
 }
 
-export function YachtCard({ yacht }: YachtCardProps) {
+export function YachtCard({ yacht, specialBadge }: YachtCardProps) {
   const [offer, setOffer] = useState<Offer | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
   const [isOfferActive, setIsOfferActive] = useState(false);
@@ -122,6 +123,37 @@ export function YachtCard({ yacht }: YachtCardProps) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
           
+          {/* Captain's Pick / Special Badge */}
+          {specialBadge && (
+            <motion.div 
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="absolute top-4 left-4 z-30"
+            >
+              <div className="relative group/badge">
+                <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 rounded-full blur opacity-40 group-hover/badge:opacity-70 transition duration-1000 group-hover/badge:duration-200 animate-tilt"></div>
+                <div className="relative px-4 py-1.5 bg-slate-900 rounded-full flex items-center gap-2 border border-yellow-500/30">
+                  <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">
+                    {specialBadge}
+                  </span>
+                  <motion.div 
+                    animate={{ 
+                      x: ['-100%', '200%'],
+                      opacity: [0, 1, 0]
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                    className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {offer && (
             <div className="absolute top-0 right-4 z-30 pointer-events-none drop-shadow-xl">
               {/* The 3D Ribbon Container */}
