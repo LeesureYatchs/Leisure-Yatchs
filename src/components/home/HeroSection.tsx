@@ -1,14 +1,25 @@
+import { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Play, ChevronDown } from 'lucide-react';
 
 export function HeroSection() {
+  const containerRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const opacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+
   const scrollToContent = () => {
     window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
   };
 
   return (
-    <section className="relative h-screen overflow-hidden">
+    <section ref={containerRef} className="relative h-screen overflow-hidden">
       {/* Video Background */}
       <div className="absolute inset-0">
         <video
@@ -29,8 +40,11 @@ export function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center text-center text-white px-4">
-        <div className="max-w-4xl mx-auto animate-fade-in">
+      <motion.div 
+        style={{ y, opacity }}
+        className="relative z-10 h-full flex flex-col items-center justify-center text-center text-white px-4"
+      >
+        <div className="max-w-4xl mx-auto">
           <span className="inline-block text-sm md:text-base font-medium tracking-widest uppercase mb-4 text-white/80">
             Dubai, UAE
           </span>
@@ -73,7 +87,7 @@ export function HeroSection() {
         >
           <ChevronDown className="w-8 h-8" />
         </button>
-      </div>
+      </motion.div>
     </section>
   );
 }

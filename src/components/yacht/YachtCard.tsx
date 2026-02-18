@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Ruler, Bath, ArrowRight, Percent, Tag, Crown, Star, Gem, Anchor, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { optimizeImage } from '@/lib/image-optimizer';
+
 interface YachtCardProps {
   yacht: Yacht;
 }
@@ -16,8 +18,7 @@ export function YachtCard({ yacht }: YachtCardProps) {
   const [offer, setOffer] = useState<Offer | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
   const [isOfferActive, setIsOfferActive] = useState(false);
-  const defaultImage = 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80';
-  const imageUrl = yacht.images && yacht.images.length > 0 ? yacht.images[0] : defaultImage;
+  const imageUrl = optimizeImage(yacht.images?.[0], 800, 75);
 
   useEffect(() => {
     fetchOffer();

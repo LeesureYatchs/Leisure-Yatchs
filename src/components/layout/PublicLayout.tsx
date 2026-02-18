@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import { MessageCircle } from 'lucide-react';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { PageTransition } from '../ui/PageTransition';
 
 interface PublicLayoutProps {
   children: ReactNode;
@@ -12,7 +12,9 @@ export function PublicLayout({ children }: PublicLayoutProps) {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        {children}
+        <PageTransition>
+          {children}
+        </PageTransition>
       </main>
       <Footer />
       

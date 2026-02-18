@@ -4,6 +4,7 @@ import { supabase, Offer, Yacht } from '@/lib/supabase';
 import { Sparkles, X, ChevronRight, Percent, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { optimizeImage } from '@/lib/image-optimizer';
 
 export function SpecialOfferBadge() {
   const [offers, setOffers] = useState<(Offer & { yacht: Yacht })[]>([]);
@@ -41,7 +42,7 @@ export function SpecialOfferBadge() {
   if (offers.length === 0 || !isVisible) return null;
 
   const currentOffer = offers[activeIndex];
-  const yachtImage = currentOffer.yacht.images?.[0] || 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=1920&q=80';
+  const yachtImage = optimizeImage(currentOffer.yacht.images?.[0], 1200, 80);
 
   return (
     <section className="py-20 relative overflow-hidden bg-white">

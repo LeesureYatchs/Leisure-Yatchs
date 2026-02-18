@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import ShipLoader from '@/components/ui/ShipLoader';
 import { SocialProofPopup } from '@/components/ui/SocialProofPopup';
+import { optimizeImage } from '@/lib/image-optimizer';
 
 export default function YachtDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -340,7 +341,7 @@ export default function YachtDetailPage() {
                       onClick={() => setIsVideoModalOpen(true)}
                     >
                       <img
-                        src={currentMedia}
+                        src={optimizeImage(currentMedia, 1200)}
                         alt={yacht?.name}
                         loading="lazy"
                         decoding="async"
@@ -468,7 +469,7 @@ export default function YachtDetailPage() {
                         </div>
                       ) : (
                         <img
-                          src={media}
+                          src={optimizeImage(media, 400)}
                           alt={`${yacht?.name} ${index + 1}`}
                           loading="lazy"
                           decoding="async"
