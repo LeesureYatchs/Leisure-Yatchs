@@ -5,6 +5,7 @@ import { HeroSection } from '@/components/home/HeroSection';
 import { AboutSection } from '@/components/home/AboutSection';
 import { BrandShowcase } from '@/components/home/BrandShowcase';
 import { FeaturedYachts } from '@/components/home/FeaturedYachts';
+import { MoreYachts } from '@/components/home/MoreYachts';
 import { CTASection } from '@/components/home/CTASection';
 
 import { SEO } from '@/components/SEO';
@@ -35,6 +36,10 @@ const Index = () => {
 
       <motion.div {...fadeIn}>
         <FeaturedYachts />
+      </motion.div>
+
+      <motion.div {...fadeIn}>
+        <MoreYachts />
       </motion.div>
 
       <motion.div {...fadeIn}>
