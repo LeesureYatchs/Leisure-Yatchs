@@ -29,10 +29,8 @@ export interface Database {
       }
     }
     Functions: {
-      [_ in string]: {
-        Args: {
-          [_ in string]: Json
-        }
+      [key: string]: {
+        Args: Record<string, Json>
         Returns: Json
       }
     }

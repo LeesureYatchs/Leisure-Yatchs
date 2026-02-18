@@ -5,7 +5,7 @@ import { supabase, Yacht, Offer } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Ruler, Bath, ArrowRight, Percent, Tag, Crown, Star, Gem, Anchor } from 'lucide-react';
+import { Users, Ruler, Bath, ArrowRight, Percent, Tag, Crown, Star, Gem, Anchor, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface YachtCardProps {
@@ -14,12 +14,43 @@ interface YachtCardProps {
 
 export function YachtCard({ yacht }: YachtCardProps) {
   const [offer, setOffer] = useState<Offer | null>(null);
+  const [timeLeft, setTimeLeft] = useState('');
   const defaultImage = 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80';
   const imageUrl = yacht.images && yacht.images.length > 0 ? yacht.images[0] : defaultImage;
 
   useEffect(() => {
     fetchOffer();
   }, [yacht.id]);
+
+  useEffect(() => {
+    if (!offer) return;
+
+    const calculateTimeLeft = () => {
+      // Split YYYY-MM-DD to avoid timezone shifts from 'new Date(string)'
+      const [year, month, day] = offer.end_date.split('-').map(Number);
+      const end = new Date(year, month - 1, day, 23, 59, 59);
+      const now = new Date();
+      const diff = end.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeLeft('Expired');
+        return;
+      }
+
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const timeString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      setTimeLeft(d > 0 ? `${d}d ${timeString}` : timeString);
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [offer]);
 
   const fetchOffer = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -53,8 +84,8 @@ export function YachtCard({ yacht }: YachtCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
           
           {offer && (
-            <div className="absolute top-4 right-4 z-10">
-              <Badge className="bg-destructive hover:bg-destructive text-white border-0 shadow-lg">
+            <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+              <Badge className="bg-destructive hover:bg-destructive text-white border-0 shadow-lg px-3 py-1 animate-pulse">
                 {offer.discount_type === 'percentage' ? (
                   <Percent className="w-3 h-3 mr-1" />
                 ) : (
@@ -64,6 +95,12 @@ export function YachtCard({ yacht }: YachtCardProps) {
                   ? `${offer.discount_value}% OFF`
                   : `AED ${offer.discount_value} OFF`}
               </Badge>
+              {timeLeft && (
+                <div className="bg-black/60 backdrop-blur-md text-white text-[10px] font-mono px-2 py-1 rounded-md flex items-center gap-1.5 shadow-xl border border-white/10">
+                  <Clock className="w-3 h-3 text-red-400" />
+                  {timeLeft}
+                </div>
+              )}
             </div>
           )}
 

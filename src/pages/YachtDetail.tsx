@@ -52,21 +52,35 @@ export default function YachtDetailPage() {
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
+    if (!offer) {
+      setTimeLeft('');
+      return;
+    }
+
     const timer = setInterval(() => {
-      const end = new Date();
-      end.setHours(23, 59, 59);
+      // Split YYYY-MM-DD to avoid timezone shifts
+      const [year, month, day] = offer.end_date.split('-').map(Number);
+      const end = new Date(year, month - 1, day, 23, 59, 59);
       const now = new Date();
       const diff = end.getTime() - now.getTime();
 
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      if (diff <= 0) {
+        setTimeLeft('Expired');
+        clearInterval(timer);
+        return;
+      }
 
-      setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const timeString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      setTimeLeft(d > 0 ? `${d}d ${timeString}` : timeString);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [offer]);
   /* 
    * Helper to check if a string is a valid UUID 
    */
@@ -152,9 +166,10 @@ export default function YachtDetailPage() {
       const { data: yachtData, error: yachtError } = await query.eq('status', 'active').maybeSingle();
 
       if (yachtError) throw yachtError;
-      setYacht(yachtData as Yacht | null);
+      const resolvedYacht = yachtData as Yacht | null;
+      setYacht(resolvedYacht);
 
-      if (yachtData) {
+      if (resolvedYacht) {
         // Title handled by SEO component
         const today = new Date().toISOString().split('T')[0];
         
@@ -162,7 +177,7 @@ export default function YachtDetailPage() {
         const { data: offerData, error: offerError } = await supabase
           .from('offers')
           .select('*')
-          .eq('yacht_id', yachtData.id)
+          .eq('yacht_id', resolvedYacht.id)
           .eq('status', 'active')
           .lte('start_date', today)
           .gte('end_date', today)
@@ -173,7 +188,7 @@ export default function YachtDetailPage() {
         }
 
         // Increment view count for analytics
-        await supabase.rpc('increment_yacht_views', { yacht_id: yachtData.id });
+        await (supabase as any).rpc('increment_yacht_views', { yacht_id: resolvedYacht.id });
       }
     } catch (error) {
       console.error('Error fetching yacht:', error);
