@@ -7,6 +7,7 @@ import { BrandShowcase } from '@/components/home/BrandShowcase';
 import { FeaturedYachts } from '@/components/home/FeaturedYachts';
 import { MoreYachts } from '@/components/home/MoreYachts';
 import { CTASection } from '@/components/home/CTASection';
+import { SpecialOfferBadge } from '@/components/home/SpecialOfferBadge';
 
 import { SEO } from '@/components/SEO';
 
@@ -25,6 +26,7 @@ const Index = () => {
         description="Book premium luxury yachts in Dubai Marina. Best price guarantee for private yacht charters, birthday parties, corporate events & sunset cruises. "
       />
       <HeroSection />
+      <SpecialOfferBadge />
       
       <motion.div {...fadeIn}>
         <AboutSection />
