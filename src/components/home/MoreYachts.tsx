@@ -24,22 +24,28 @@ export function MoreYachts() {
       
       const yachtData = (data as Yacht[]) || [];
       if (yachtData.length > 0) {
-        // Group by category and pick one random from each
-        const luxury = yachtData.filter(y => y.category === 'Luxury').sort(() => 0.5 - Math.random())[0];
-        const premium = yachtData.filter(y => y.category === 'Premium').sort(() => 0.5 - Math.random())[0];
-        const superY = yachtData.filter(y => y.category === 'Super').sort(() => 0.5 - Math.random())[0];
-
-        // Combine only the ones that exist
-        const selected = [luxury, premium, superY].filter(Boolean) as Yacht[];
+        // Get unique categories present in the data
+        const uniqueCategories = Array.from(new Set(yachtData.map(y => y.category).filter(Boolean)));
         
-        // If we have fewer than 3 (categories might be empty), fill with other random active yachts
-        if (selected.length < 3) {
-          const remaining = yachtData.filter(y => !selected.find(s => s.id === y.id))
+        // Pick one random yacht from each category
+        const selected: Yacht[] = [];
+        uniqueCategories.forEach(cat => {
+          const catYachts = yachtData.filter(y => y.category === cat);
+          if (catYachts.length > 0) {
+            selected.push(catYachts[Math.floor(Math.random() * catYachts.length)]);
+          }
+        });
+
+        // Limit to 3 and fill if necessary
+        let finalSelection = selected.slice(0, 3);
+        
+        if (finalSelection.length < 3) {
+          const remaining = yachtData.filter(y => !finalSelection.find(s => s.id === y.id))
             .sort(() => 0.5 - Math.random());
-          selected.push(...remaining.slice(0, 3 - selected.length));
+          finalSelection.push(...remaining.slice(0, 3 - finalSelection.length));
         }
 
-        setYachts(selected);
+        setYachts(finalSelection);
       }
     } catch (error) {
       console.error('Error fetching more yachts:', error);

@@ -17,6 +17,7 @@ import {
 
 export default function YachtsPage() {
   const [yachts, setYachts] = useState<Yacht[]>([]);
+  const [categories, setCategories] = useState<{ id: string, name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -24,7 +25,7 @@ export default function YachtsPage() {
 
   useEffect(() => {
     fetchYachts();
-    fetchYachts();
+    fetchCategories();
 
     // Enable Realtime Subscriptions for public fleet list
     const channel = supabase
@@ -33,6 +34,11 @@ export default function YachtsPage() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'yachts' },
         () => fetchYachts()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'yacht_categories' },
+        () => fetchCategories()
       )
       .subscribe();
 
@@ -55,6 +61,20 @@ export default function YachtsPage() {
       console.error('Error fetching yachts:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('yacht_categories')
+        .select('id, name')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
@@ -129,9 +149,11 @@ export default function YachtsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All Categories</SelectItem>
-                  <SelectItem value="Luxury">Luxury Yachts</SelectItem>
-                  <SelectItem value="Premium">Premium Yachts</SelectItem>
-                  <SelectItem value="Super">Super Yachts</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name} Yachts
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
