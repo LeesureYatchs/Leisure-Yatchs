@@ -120,23 +120,45 @@ export function YachtCard({ yacht }: YachtCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
           
           {offer && (
-            <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
-              <Badge className="bg-destructive hover:bg-destructive text-white border-0 shadow-lg px-3 py-1 animate-pulse">
-                {offer.discount_type === 'percentage' ? (
-                  <Percent className="w-3 h-3 mr-1" />
-                ) : (
-                  <Tag className="w-3 h-3 mr-1" />
-                )}
-                {offer.discount_type === 'percentage'
-                  ? `${offer.discount_value}% OFF`
-                  : `AED ${offer.discount_value} OFF`}
-              </Badge>
-              {timeLeft && (
-                <div className="bg-black/60 backdrop-blur-md text-white text-[10px] font-mono px-2 py-1 rounded-md flex items-center gap-1.5 shadow-xl border border-white/10">
-                  <Clock className="w-3 h-3 text-red-400" />
-                  {timeLeft}
+            <div className="absolute top-0 right-4 z-30 pointer-events-none drop-shadow-xl">
+              {/* The 3D Ribbon Container */}
+              <motion.div 
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="relative"
+              >
+                {/* Ribbon Side Ears (3D Effect) */}
+                <div className="absolute -left-2 top-0 w-2 h-4 bg-[#8b0000] [clip-path:polygon(100%_0,0_0,100%_100%)]" />
+                <div className="absolute -right-2 top-0 w-2 h-4 bg-[#8b0000] [clip-path:polygon(0_0,100%_0,0_100%)]" />
+                
+                {/* Ribbon Main Body */}
+                <div className="bg-[#e31e24] text-white px-4 py-2 flex flex-col items-center min-w-[120px] rounded-b-2xl shadow-lg border-x border-b border-white/10">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-90 leading-none mb-1">
+                    {offer.title || 'Special Offer'}
+                  </span>
+                  
+                  <div className="flex items-center gap-1 my-0.5">
+                    <span className="text-xl font-black leading-none tracking-tight">
+                      {offer.discount_type === 'percentage'
+                        ? `${offer.discount_value}%`
+                        : `AED ${offer.discount_value}`}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase">OFF</span>
+                  </div>
+
+                  {timeLeft && (
+                    <div className="flex items-center gap-1.5 mt-1 pt-1.5 border-t border-white/20 w-full justify-center">
+                      <Clock className="w-2.5 h-2.5 text-white/80 animate-pulse" />
+                      <span className="text-[9px] font-mono font-bold tracking-tighter">
+                        {timeLeft}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Bottom Center Notch/Curve Shadow (Optional for extra depth) */}
+                <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-4 h-[2px] bg-red-800/30 blur-sm rounded-full" />
+              </motion.div>
             </div>
           )}
 
