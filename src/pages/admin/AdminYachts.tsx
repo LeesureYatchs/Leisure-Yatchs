@@ -10,6 +10,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -353,7 +354,7 @@ export default function AdminYachts() {
       };
 
       if (editingYacht) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('yachts')
           .update(yachtData)
           .eq('id', editingYacht.id);
@@ -361,7 +362,7 @@ export default function AdminYachts() {
         if (error) throw error;
         toast({ title: 'Yacht updated successfully' });
       } else {
-        const { error } = await supabase.from('yachts').insert(yachtData);
+        const { error } = await (supabase as any).from('yachts').insert(yachtData);
 
         if (error) throw error;
         toast({ title: 'Yacht created successfully' });
@@ -405,7 +406,7 @@ export default function AdminYachts() {
     if (!confirm(`Are you sure you want to ${action} this yacht?`)) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('yachts')
         .update({ status: newStatus })
         .eq('id', yacht.id);
@@ -488,6 +489,9 @@ export default function AdminYachts() {
                     <SheetTitle>
                       {editingYacht ? 'Edit Yacht' : 'Add New Yacht'}
                     </SheetTitle>
+                    <SheetDescription>
+                      {editingYacht ? 'Modify the details of your yacht below.' : 'Enter the details for your new yacht fleet addition.'}
+                    </SheetDescription>
                   </SheetHeader>
                   <form onSubmit={handleSubmit} className="space-y-6 pb-6">
                     <div className="grid grid-cols-2 gap-4">
@@ -593,6 +597,7 @@ export default function AdminYachts() {
                               <SelectValue placeholder="Select Hours" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="1">1 Hour</SelectItem>
                               <SelectItem value="2">2 Hours</SelectItem>
                               <SelectItem value="3">3 Hours</SelectItem>
                               <SelectItem value="4">4 Hours</SelectItem>
