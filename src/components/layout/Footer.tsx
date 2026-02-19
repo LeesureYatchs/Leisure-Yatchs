@@ -9,8 +9,8 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
               <Link to="/" className="flex items-center gap-2">
-              <img src="/leisureyatch.png" alt="LeisureYatchs" className="h-10 w-auto object-contain" />
-              <span className="text-2xl font-bold">LeisureYatchs</span>
+              <img src="/leisureyatch.png" alt="Leisure Yacht" className="h-10 w-auto object-contain" />
+              <span className="text-2xl font-bold">Leisure Yacht</span>
             </Link>
             <p className="text-white/70 text-sm leading-relaxed">
               Experience luxury yacht rentals in Dubai. Discover the Arabian Gulf 
@@ -93,7 +93,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/50 text-sm">
-            © {new Date().getFullYear()} LeisureYatchs. All rights reserved.
+            © {new Date().getFullYear()} The Leisure Yacht. All rights reserved.
           </p>
           <p className="text-white/50 text-sm">
             Crafted with <span className="text-red-500">♥</span> by{' '}

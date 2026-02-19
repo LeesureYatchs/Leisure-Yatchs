@@ -222,7 +222,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div className="h-24 px-6 border-b hidden lg:flex items-center">
           <Link to="/admin/dashboard" className="flex items-center gap-2">
             <img src="/leisureyatch.png" alt="LeisureYatchs" className="h-10 w-auto object-contain" />
-            <span className="font-bold text-xl">LeisureYatchs</span>
+            <span className="font-bold text-xl">LeisureYatch</span>
           </Link>
         </div>
 

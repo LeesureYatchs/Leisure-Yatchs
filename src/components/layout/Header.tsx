@@ -65,7 +65,7 @@ export function Header() {
               <div className="relative">
                 <img 
                   src="/leisureyatch.png" 
-                  alt="LeisureYatchs" 
+                  alt="Leisure Yacht" 
                   loading="eager"
                   // @ts-expect-error fetchpriority is a valid attribute but not in React types yet
                   fetchpriority="high"
@@ -76,7 +76,7 @@ export function Header() {
                 'text-2xl font-bold tracking-tight transition-colors',
                 isScrolled || !isHomePage ? 'text-primary' : 'text-white'
               )}>
-                LeisureYatchs
+                LeisureYacht
               </span>
             </div>
 
