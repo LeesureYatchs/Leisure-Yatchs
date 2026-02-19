@@ -81,7 +81,7 @@ export default function AdminBookings() {
 
   const fetchBookings = async () => {
     try {
-      const { data: bookingsData, error: bookingsError } = await supabase
+      const { data: bookingsData, error: bookingsError } = await (supabase as any)
         .from('bookings')
         .select('*')
         .order('created_at', { ascending: false });
@@ -89,7 +89,7 @@ export default function AdminBookings() {
       if (bookingsError) throw bookingsError;
 
       if (bookingsData && bookingsData.length > 0) {
-        const yachtIds = [...new Set(bookingsData.map((b) => b.yacht_id))];
+        const yachtIds = [...new Set((bookingsData as any[]).map((b) => b.yacht_id))];
         const { data: yachtsData, error: yachtsError } = await supabase
           .from('yachts')
           .select('*')
@@ -97,19 +97,18 @@ export default function AdminBookings() {
 
         if (yachtsError) throw yachtsError;
 
-        const bookingsWithYachts = bookingsData.map((booking) => ({
-          ...booking,
-          yacht: yachtsData?.find((y) => y.id === booking.yacht_id) as Yacht | undefined,
-        }));
-
-        // Sort: Pending first, then by date descending
-        const sortedBookings = [...bookingsWithYachts].sort((a, b) => {
+        const sortedBookings = [...(bookingsData as any[])].sort((a, b) => {
           if (a.status === 'pending' && b.status !== 'pending') return -1;
           if (a.status !== 'pending' && b.status === 'pending') return 1;
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
 
-        setBookings(sortedBookings as (Booking & { yacht?: Yacht })[]);
+        const bookingsWithYachts = sortedBookings.map((booking) => ({
+          ...booking,
+          yacht: (yachtsData as any[] | null)?.find((y: any) => y.id === (booking as any).yacht_id) as Yacht | undefined,
+        }));
+
+        setBookings(bookingsWithYachts as (Booking & { yacht?: Yacht })[]);
       } else {
         setBookings([]);
       }
@@ -122,7 +121,7 @@ export default function AdminBookings() {
 
   const updateStatus = async (id: string, status: BookingStatus, booking?: Booking & { yacht?: Yacht }) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('bookings')
         .update({ status })
         .eq('id', id);
@@ -274,7 +273,7 @@ export default function AdminBookings() {
     
     setUpdating(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('bookings')
         .update({
           booking_date: editFormData.booking_date,
@@ -405,9 +404,22 @@ export default function AdminBookings() {
                       </TableCell>
                       
                       <TableCell>
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <Users className="w-4 h-4 text-primary/70 shrink-0" />
-                          {booking.guests} People
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Users className="w-4 h-4 text-primary/70 shrink-0" />
+                            {booking.guests} People
+                          </div>
+                          {booking.event_type.includes('Sharing') && booking.message?.includes('Adults:') && (
+                            <div className="text-[10px] text-muted-foreground bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10 inline-block w-fit">
+                              {(() => {
+                                const adultsMatch = booking.message.match(/Adults: (\d+)/);
+                                const kidsMatch = booking.message.match(/Kids: (\d+)/);
+                                const adults = adultsMatch ? adultsMatch[1] : '0';
+                                const kids = kidsMatch ? kidsMatch[1] : '0';
+                                return `${adults} A • ${kids} K`;
+                              })()}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       

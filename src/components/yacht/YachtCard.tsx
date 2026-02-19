@@ -235,6 +235,23 @@ export function YachtCard({ yacht, specialBadge }: YachtCardProps) {
             </div>
           )}
 
+          {yacht.is_sharing_available && (
+            <div className="absolute top-14 left-4 z-20">
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="relative flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-xl border border-blue-500/20 shadow-2xl overflow-hidden bg-gradient-to-r from-blue-600/90 to-indigo-700/90 text-white group/sharing"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  Sharing Starting AED {yacht.sharing_price_60_adult}
+                </span>
+                {/* 30% width shine effect */}
+                <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/sharing:animate-[shimmer_2s_infinite] transition-transform pointer-events-none" />
+              </motion.div>
+            </div>
+          )}
+
           <div className="absolute bottom-4 left-4 right-4 transform group-hover:translate-y-[-4px] transition-transform duration-300">
             <h3 className="text-white text-xl font-bold mb-0.5 drop-shadow-md">{yacht.name}</h3>
             <p className="text-white/90 text-xs font-medium uppercase tracking-wider">{yacht.feet} ft • {yacht.category || 'Luxury'}</p>
@@ -251,10 +268,12 @@ export function YachtCard({ yacht, specialBadge }: YachtCardProps) {
               <Ruler className="w-3.5 h-3.5 text-primary" />
               <span className="text-xs font-semibold">{yacht.feet} ft</span>
             </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground bg-primary/5 px-2 py-1 rounded-md shrink-0">
-              <Bath className="w-3.5 h-3.5 text-primary" />
-              <span className="text-xs font-semibold">{yacht.restrooms || 1} Bath</span>
-            </div>
+            {yacht.restrooms && yacht.restrooms > 0 ? (
+              <div className="flex items-center gap-1.5 text-muted-foreground bg-primary/5 px-2 py-1 rounded-md shrink-0">
+                <Bath className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-semibold">{yacht.restrooms} Bath</span>
+              </div>
+            ) : null}
           </div>
 
           <div className="flex items-center justify-between">

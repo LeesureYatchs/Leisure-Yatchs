@@ -96,25 +96,25 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       const [yachtsRes, offersRes, bookingsRes] = await Promise.all([
-        supabase.rpc('get_yachts_with_views'), // Using fallback to standard select if rpc fails below
-        supabase
+        (supabase as any).rpc('get_yachts_with_views'), // Using fallback to standard select if rpc fails below
+        (supabase as any)
           .from('offers')
           .select('id', { count: 'exact' })
           .eq('status', 'active'),
-        supabase
+        (supabase as any)
           .from('bookings')
           .select('id, status, total_amount, booking_date, customer_name, yacht_id, created_at, event_type')
           .order('created_at', { ascending: false }),
       ]);
 
       // Fallback for yachts if RPC isn't applied yet
-      let yachtsData = yachtsRes.data || [];
+      let yachtsData = (yachtsRes.data || []) as any[];
       if (!yachtsRes.data) {
-        const { data } = await supabase.from('yachts').select('id, name, views_count');
-        yachtsData = data || [];
+        const { data } = await (supabase as any).from('yachts').select('id, name, views_count');
+        yachtsData = (data || []) as any[];
       }
 
-      const bookings = bookingsRes.data || [];
+      const bookings = (bookingsRes.data || []) as any[];
       const totalBookings = bookings.length;
       const pendingBookings = bookings.filter((b) => b.status === 'pending').length;
       

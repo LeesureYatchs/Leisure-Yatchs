@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Loader2, Check, X, MessageCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, Check, X, MessageCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -39,10 +39,27 @@ interface BookingFormProps {
   originalPrice?: number;
   maxCapacity: number;
   minimumHours: number;
+  isSharingAvailable?: boolean;
+  sharingPrices?: {
+    p60Adult: number;
+    p60Kid: number;
+    p100Adult: number;
+    p100Kid: number;
+  };
   onCancel: () => void;
 }
 
-export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, maxCapacity, minimumHours, onCancel }: BookingFormProps) {
+export function BookingForm({ 
+  yachtId, 
+  yachtName, 
+  hourlyPrice, 
+  originalPrice, 
+  maxCapacity, 
+  minimumHours, 
+  isSharingAvailable,
+  sharingPrices,
+  onCancel 
+}: BookingFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState<'check' | 'form' | 'success'>('check');
   const [loading, setLoading] = useState(false);
@@ -50,6 +67,10 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [durationHours, setDurationHours] = useState(minimumHours);
   const [startTime, setStartTime] = useState('10:00');
+  const [bookingType, setBookingType] = useState<'private' | 'sharing'>('private');
+  const [sharingDuration, setSharingDuration] = useState<60 | 100>(60);
+  const [guestCounts, setGuestCounts] = useState({ adults: 1, kids: 0 });
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -150,7 +171,7 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
     if (!date) return;
     try {
       const bookingDate = format(date, 'yyyy-MM-dd');
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('bookings')
         .select('start_time, end_time')
         .eq('yacht_id', yachtId)
@@ -167,13 +188,29 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
   };
 
   const endTime = useMemo(() => {
-    const [h, m] = startTime.split(':').map(Number);
-    const endH = (h + durationHours) % 24;
-    return `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const [startH, startM] = startTime.split(':').map(Number);
+    // Convert durationHours (which could be fractional) to total minutes
+    const durationMinutes = Math.round(durationHours * 60);
+    const totalEndMinutes = (startH * 60 + startM + durationMinutes);
+    
+    const endH = Math.floor(totalEndMinutes / 60) % 24;
+    const endM = totalEndMinutes % 60;
+    
+    return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
   }, [startTime, durationHours]);
 
-  const totalAmount = hourlyPrice * durationHours;
-  const originalTotal = originalPrice ? originalPrice * durationHours : null;
+  const totalAmount = useMemo(() => {
+    if (bookingType === 'sharing' && sharingPrices) {
+      if (sharingDuration === 60) {
+        return (guestCounts.adults * sharingPrices.p60Adult) + (guestCounts.kids * sharingPrices.p60Kid);
+      } else {
+        return (guestCounts.adults * sharingPrices.p100Adult) + (guestCounts.kids * sharingPrices.p100Kid);
+      }
+    }
+    return hourlyPrice * durationHours;
+  }, [bookingType, sharingDuration, guestCounts, hourlyPrice, durationHours, sharingPrices]);
+
+  const originalTotal = originalPrice && bookingType === 'private' ? originalPrice * durationHours : null;
 
   const checkAvailability = async () => {
     if (!date) {
@@ -185,7 +222,7 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
     try {
       const bookingDate = format(date, 'yyyy-MM-dd');
       // Fetch both confirmed and pending bookings to be safe
-      const { data: existingBookings, error } = await supabase
+      const { data: existingBookings, error } = await (supabase as any)
         .from('bookings')
         .select('*')
         .eq('yacht_id', yachtId)
@@ -195,8 +232,8 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
       if (error) throw error;
 
       // Find the specific conflicting booking
-      const conflict = existingBookings?.find((booking) => {
-        return startTime < booking.end_time && endTime > booking.start_time;
+      const conflict = (existingBookings as any[])?.find((booking) => {
+        return startTime < booking.start_time && endTime > booking.end_time;
       });
 
       if (conflict) {
@@ -237,19 +274,21 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
 
     setLoading(true);
     try {
-      const { error } = await supabase.from('bookings').insert({
+      const { error } = await (supabase as any).from('bookings').insert({
         yacht_id: yachtId,
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
-        message: formData.message || null,
+        message: bookingType === 'sharing' 
+          ? `SHARING TRIP: ${sharingDuration} mins\nAdults: ${guestCounts.adults}, Kids: ${guestCounts.kids}\n${formData.message}`
+          : formData.message || null,
         booking_date: format(date, 'yyyy-MM-dd'),
         start_time: startTime,
         end_time: endTime,
-        duration_hours: durationHours,
+        duration_hours: bookingType === 'sharing' ? Number((sharingDuration / 60).toFixed(2)) : durationHours,
         total_amount: totalAmount,
-        guests: formData.guests,
-        event_type: formData.eventType,
+        guests: bookingType === 'sharing' ? (guestCounts.adults + guestCounts.kids) : formData.guests,
+        event_type: bookingType === 'sharing' ? 'Sharing Trip' : formData.eventType,
         status: 'pending',
       });
 
@@ -274,8 +313,10 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
             duration_hours: durationHours,
             guests: formData.guests,
             total_amount: totalAmount,
-            event_type: formData.eventType,
-            message: formData.message || 'No additional message',
+            event_type: bookingType === 'sharing' ? `Sharing Trip (${sharingDuration} mins)` : formData.eventType,
+            message: bookingType === 'sharing' 
+              ? `Adults: ${guestCounts.adults}, Kids: ${guestCounts.kids}\n${formData.message}`
+              : formData.message || 'No additional message',
           },
           import.meta.env.VITE_EMAILJS_PUBLIC_KEY
         );
@@ -322,6 +363,29 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
           <X className="w-5 h-5" />
         </button>
       </div>
+
+      {isSharingAvailable && step === 'check' && (
+        <div className="flex p-1 bg-muted rounded-lg mb-6">
+          <button
+            onClick={() => setBookingType('private')}
+            className={cn(
+              "flex-1 py-2 text-sm font-bold rounded-md transition-all",
+              bookingType === 'private' ? "bg-white shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Private Charter
+          </button>
+          <button
+            onClick={() => setBookingType('sharing')}
+            className={cn(
+              "flex-1 py-2 text-sm font-bold rounded-md transition-all",
+              bookingType === 'sharing' ? "bg-white shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Sharing Trip
+          </button>
+        </div>
+      )}
 
       {step === 'check' && (
         <div className="space-y-4">
@@ -394,19 +458,80 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
             />
           </div>
 
-          <div>
-            <Label htmlFor="duration">Duration (Hours)</Label>
-            <Select value={String(durationHours)} onValueChange={(v) => setDurationHours(Number(v))}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 12 - minimumHours + 1 }, (_, i) => i + minimumHours).map((h) => (
-                  <SelectItem key={h} value={String(h)}>{h} {h === 1 ? 'hour' : 'hours'}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {bookingType === 'private' ? (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="duration">Duration (Hours)</Label>
+                <Select value={String(durationHours)} onValueChange={(v) => setDurationHours(Number(v))}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 - minimumHours + 1 }, (_, i) => i + minimumHours).map((h) => (
+                      <SelectItem key={h} value={String(h)}>{h} {h === 1 ? 'hour' : 'hours'}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="check-guests">Number of Guests (max {maxCapacity})</Label>
+                <Input
+                  id="check-guests"
+                  type="number"
+                  min={1}
+                  max={maxCapacity}
+                  value={formData.guests}
+                  onChange={(e) => setFormData({ ...formData, guests: Math.min(Number(e.target.value), maxCapacity) })}
+                  className="mt-1.5"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label>Travel Time</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1.5">
+                  <Button
+                    type="button"
+                    variant={sharingDuration === 60 ? 'default' : 'outline'}
+                    onClick={() => setSharingDuration(60)}
+                    className="flex items-center gap-2"
+                  >
+                    <Clock className="w-4 h-4" /> 60 Mins
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={sharingDuration === 100 ? 'default' : 'outline'}
+                    onClick={() => setSharingDuration(100)}
+                    className="flex items-center gap-2"
+                  >
+                    <Clock className="w-4 h-4" /> 100 Mins
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Adults</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={guestCounts.adults}
+                    onChange={(e) => setGuestCounts({ ...guestCounts, adults: Math.max(1, Number(e.target.value)) })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Kids (Under 12)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={guestCounts.kids}
+                    onChange={(e) => setGuestCounts({ ...guestCounts, kids: Math.max(0, Number(e.target.value)) })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">End Time:</span>
@@ -443,7 +568,10 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              AED {hourlyPrice.toLocaleString()}/hr × {durationHours} {durationHours === 1 ? 'hour' : 'hours'}
+              {bookingType === 'sharing' 
+                ? `${sharingDuration} Mins • ${guestCounts.adults} Adults, ${guestCounts.kids} Kids`
+                : `AED ${hourlyPrice.toLocaleString()}/hr × ${durationHours} ${durationHours === 1 ? 'hour' : 'hours'}`
+              }
             </p>
           </div>
 
@@ -467,7 +595,12 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
             className="w-full border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 font-bold"
             onClick={() => {
               const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '971545706788';
-              const message = `Hello Leisure Yachts,\n\nI am interested in booking *${yachtName}*.\n\n📅 Date: ${date ? format(date, 'PPP') : 'Not selected'}\n⏰ Time: ${startTime}\n⏳ Duration: ${durationHours} hours\n👥 Guests: ${formData.guests || maxCapacity}\n💰 Estimated Price: AED ${totalAmount.toLocaleString()}\n\nPlease confirm availability.`;
+              const durationText = bookingType === 'sharing' ? `${sharingDuration} mins` : `${durationHours} hours`;
+              const guestsText = bookingType === 'sharing' 
+                ? `${guestCounts.adults} Adults, ${guestCounts.kids} Kids` 
+                : `${formData.guests || maxCapacity}`;
+              
+              const message = `Hello Leisure Yachts,\n\nI am interested in booking *${yachtName}* (${bookingType === 'sharing' ? 'Sharing Trip' : 'Private Charter'}).\n\n📅 Date: ${date ? format(date, 'PPP') : 'Not selected'}\n⏰ Time: ${startTime}\n⏳ Duration: ${durationText}\n👥 Guests: ${guestsText}\n💰 Estimated Price: AED ${totalAmount.toLocaleString()}\n\nPlease confirm availability.`;
               window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
             }}
           >
@@ -541,33 +674,37 @@ export function BookingForm({ yachtId, yachtName, hourlyPrice, originalPrice, ma
             />
           </div>
 
-          <div>
-            <Label htmlFor="guests">Number of Guests * (max {maxCapacity})</Label>
-            <Input
-              id="guests"
-              type="number"
-              min={1}
-              max={maxCapacity}
-              value={formData.guests}
-              onChange={(e) => setFormData({ ...formData, guests: Math.min(Number(e.target.value), maxCapacity) })}
-              className="mt-1.5"
-              required
-            />
-          </div>
+          {bookingType === 'private' && (
+            <div>
+              <Label htmlFor="guests">Number of Guests * (max {maxCapacity})</Label>
+              <Input
+                id="guests"
+                type="number"
+                min={1}
+                max={maxCapacity}
+                value={formData.guests}
+                onChange={(e) => setFormData({ ...formData, guests: Math.min(Number(e.target.value), maxCapacity) })}
+                className="mt-1.5"
+                required
+              />
+            </div>
+          )}
 
-          <div>
-            <Label>Event Type *</Label>
-            <Select value={formData.eventType} onValueChange={(v) => setFormData({ ...formData, eventType: v })}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {EVENT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {bookingType === 'private' && (
+            <div>
+              <Label>Event Type *</Label>
+              <Select value={formData.eventType} onValueChange={(v) => setFormData({ ...formData, eventType: v })}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="message">Message (Optional)</Label>

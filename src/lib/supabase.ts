@@ -22,6 +22,11 @@ export interface Yacht {
   trip_itinerary_ids: string[];
   category: string | null;
   status: 'active' | 'inactive';
+  is_sharing_available: boolean;
+  sharing_price_60_adult: number;
+  sharing_price_60_kid: number;
+  sharing_price_100_adult: number;
+  sharing_price_100_kid: number;
   created_at: string;
   updated_at: string;
 }

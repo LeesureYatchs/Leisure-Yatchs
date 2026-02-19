@@ -4,6 +4,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import {
   Sheet,
@@ -24,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Loader2, Ship, Eye, EyeOff, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Ship, Eye, EyeOff, Search, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MediaUpload } from '@/components/admin/MediaUpload';
 import ShipLoader from '@/components/ui/ShipLoader';
@@ -48,6 +49,11 @@ interface YachtFormData {
   videos: string[];
   status: YachtStatus;
   category?: string;
+  is_sharing_available: boolean;
+  sharing_price_60_adult: number;
+  sharing_price_60_kid: number;
+  sharing_price_100_adult: number;
+  sharing_price_100_kid: number;
 }
 
 const defaultFormData: YachtFormData = {
@@ -67,6 +73,11 @@ const defaultFormData: YachtFormData = {
   videos: [],
   status: 'active',
   category: 'Luxury',
+  is_sharing_available: false,
+  sharing_price_60_adult: 150,
+  sharing_price_60_kid: 100,
+  sharing_price_100_adult: 200,
+  sharing_price_100_kid: 150,
 };
 
 export default function AdminYachts() {
@@ -240,6 +251,11 @@ export default function AdminYachts() {
         videos: yacht.videos || [],
         status: yacht.status,
         category: yacht.category || 'Luxury',
+        is_sharing_available: yacht.is_sharing_available || false,
+        sharing_price_60_adult: yacht.sharing_price_60_adult || 150,
+        sharing_price_60_kid: yacht.sharing_price_60_kid || 100,
+        sharing_price_100_adult: yacht.sharing_price_100_adult || 200,
+        sharing_price_100_kid: yacht.sharing_price_100_kid || 150,
       });
     } else {
       setEditingYacht(null);
@@ -252,11 +268,11 @@ export default function AdminYachts() {
     if (!newAmenity.trim()) return;
     setAddingAmenity(true);
     try {
-      const { data, error } = await (supabase
-        .from('amenities' as any)
+      const { data, error } = await ((supabase as any)
+        .from('amenities')
         .insert({ name: newAmenity.trim() })
         .select()
-        .single()) as any;
+        .single());
 
       if (error) throw error;
 
@@ -279,11 +295,11 @@ export default function AdminYachts() {
     if (!newRecreationExtra.trim()) return;
     setAddingRecreationExtra(true);
     try {
-      const { data, error } = await (supabase
-        .from('recreation_extras' as any)
+      const { data, error } = await ((supabase as any)
+        .from('recreation_extras')
         .insert({ name: newRecreationExtra.trim() })
         .select()
-        .single()) as any;
+        .single());
 
       if (error) throw error;
 
@@ -306,11 +322,11 @@ export default function AdminYachts() {
     if (!newCategory.trim()) return;
     setAddingCategory(true);
     try {
-      const { data, error } = await (supabase
-        .from('yacht_categories' as any)
+      const { data, error } = await ((supabase as any)
+        .from('yacht_categories')
         .insert({ name: newCategory.trim() })
         .select()
-        .single()) as any;
+        .single());
 
       if (error) throw error;
 
@@ -351,6 +367,11 @@ export default function AdminYachts() {
         videos: formData.videos,
         status: formData.status,
         category: formData.category,
+        is_sharing_available: formData.is_sharing_available,
+        sharing_price_60_adult: formData.sharing_price_60_adult,
+        sharing_price_60_kid: formData.sharing_price_60_kid,
+        sharing_price_100_adult: formData.sharing_price_100_adult,
+        sharing_price_100_kid: formData.sharing_price_100_kid,
       };
 
       if (editingYacht) {
@@ -385,7 +406,7 @@ export default function AdminYachts() {
     if (!confirm('Are you sure you want to delete this yacht?')) return;
 
     try {
-      const { error } = await supabase.from('yachts').delete().eq('id', id);
+      const { error } = await (supabase as any).from('yachts').delete().eq('id', id);
 
       if (error) throw error;
       toast({ title: 'Yacht deleted successfully' });
@@ -689,6 +710,81 @@ export default function AdminYachts() {
                             >
                               Cancel
                             </Button>
+                          </div>
+                        )}
+                      </div>
+                      {/* Sharing Section */}
+                      <div className="col-span-2 space-y-4 pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label className="text-base text-slate-900 font-bold">Sharing Available</Label>
+                            <p className="text-sm text-slate-500">
+                              Enable per-person ticket booking for this yacht/boat.
+                            </p>
+                          </div>
+                          <Switch
+                            checked={formData.is_sharing_available}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, is_sharing_available: checked })
+                            }
+                          />
+                        </div>
+
+                        {formData.is_sharing_available && (
+                          <div className="grid grid-cols-2 gap-x-8 gap-y-4 p-4 bg-primary/5 rounded-xl border border-primary/10 animate-in fade-in slide-in-from-top-2 duration-300">
+                            {/* 60 Mins Prices */}
+                            <div className="space-y-4">
+                              <h4 className="text-sm font-bold text-primary flex items-center gap-2">
+                                <Clock className="w-4 h-4" /> 60 Mins Sharing
+                              </h4>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs uppercase font-bold text-slate-500">Adult Price</Label>
+                                  <Input
+                                    type="number"
+                                    value={formData.sharing_price_60_adult}
+                                    onChange={(e) => setFormData({ ...formData, sharing_price_60_adult: Number(e.target.value) })}
+                                    className="bg-white h-9 border-primary/20"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs uppercase font-bold text-slate-500">Kid Price</Label>
+                                  <Input
+                                    type="number"
+                                    value={formData.sharing_price_60_kid}
+                                    onChange={(e) => setFormData({ ...formData, sharing_price_60_kid: Number(e.target.value) })}
+                                    className="bg-white h-9 border-primary/20"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 100 Mins Prices */}
+                            <div className="space-y-4">
+                              <h4 className="text-sm font-bold text-primary flex items-center gap-2">
+                                <Clock className="w-4 h-4" /> 100 Mins Sharing
+                              </h4>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs uppercase font-bold text-slate-500">Adult Price</Label>
+                                  <Input
+                                    type="number"
+                                    value={formData.sharing_price_100_adult}
+                                    onChange={(e) => setFormData({ ...formData, sharing_price_100_adult: Number(e.target.value) })}
+                                    className="bg-white h-9 border-primary/20"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <Label className="text-xs uppercase font-bold text-slate-500">Kid Price</Label>
+                                  <Input
+                                    type="number"
+                                    value={formData.sharing_price_100_kid}
+                                    onChange={(e) => setFormData({ ...formData, sharing_price_100_kid: Number(e.target.value) })}
+                                    className="bg-white h-9 border-primary/20"
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>

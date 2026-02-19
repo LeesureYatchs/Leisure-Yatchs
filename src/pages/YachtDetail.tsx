@@ -569,14 +569,18 @@ export default function YachtDetailPage() {
                         <Users className="w-5 h-5 text-primary" />
                         <span>{yacht?.capacity} Guests</span>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Home className="w-5 h-5 text-primary" />
-                        <span>{yacht?.cabins} Cabins</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Bath className="w-5 h-5 text-primary" />
-                        <span>{yacht?.restrooms} Restrooms</span>
-                      </div>
+                      {yacht?.cabins && yacht.cabins > 0 ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Home className="w-5 h-5 text-primary" />
+                          <span>{yacht?.cabins} Cabins</span>
+                        </div>
+                      ) : null}
+                      {yacht?.restrooms && yacht.restrooms > 0 ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Bath className="w-5 h-5 text-primary" />
+                          <span>{yacht?.restrooms} Restrooms</span>
+                        </div>
+                      ) : null}
                     </div>
                   </>
                 )}
@@ -628,6 +632,69 @@ export default function YachtDetailPage() {
                          </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sharing Prices Section */}
+              {yacht?.is_sharing_available && (
+                <div className="pt-8 border-t">
+                  <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold">Sharing Options Available</h2>
+                        <p className="text-sm text-muted-foreground">Book individual tickets for a shared experience</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* 60 Mins Option */}
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-primary/5 hover:border-primary/20 transition-colors">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-bold flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-primary" /> 60 Mins Trip
+                          </h3>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-none">Most Popular</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground font-medium">Adult Ticket</span>
+                            <span className="font-bold text-primary text-base">AED {yacht.sharing_price_60_adult}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground font-medium">Kid Ticket (under 12)</span>
+                            <span className="font-bold text-primary text-base">AED {yacht.sharing_price_60_kid}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 100 Mins Option */}
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-primary/5 hover:border-primary/20 transition-colors">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-bold flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-primary" /> 100 Mins Trip
+                          </h3>
+                          <Badge variant="outline" className="text-primary border-primary/20">Best Value</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground font-medium">Adult Ticket</span>
+                            <span className="font-bold text-primary text-base">AED {yacht.sharing_price_100_adult}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground font-medium">Kid Ticket (under 12)</span>
+                            <span className="font-bold text-primary text-base">AED {yacht.sharing_price_100_kid}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-[10px] text-muted-foreground mt-4 italic">
+                      * Sharing trips depart at scheduled times. Contact us after booking to confirm your slot.
+                    </p>
                   </div>
                 </div>
               )}
@@ -783,6 +850,13 @@ export default function YachtDetailPage() {
                       originalPrice={(offer && isOfferActive) ? yacht.hourly_price : undefined}
                       maxCapacity={yacht.capacity}
                       minimumHours={yacht.minimum_hours || 2}
+                      isSharingAvailable={yacht.is_sharing_available}
+                      sharingPrices={{
+                        p60Adult: yacht.sharing_price_60_adult,
+                        p60Kid: yacht.sharing_price_60_kid,
+                        p100Adult: yacht.sharing_price_100_adult,
+                        p100Kid: yacht.sharing_price_100_kid,
+                      }}
                       onCancel={() => setShowBookingForm(false)}
                     />
                   ) : (
