@@ -132,9 +132,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const fetchVisitorCount = async () => {
     // Get count of unique visitors
-    const { count } = await (supabase as any)
+    const { count, error } = await (supabase as any)
       .from('visitor_logs')
       .select('*', { count: 'exact', head: true });
+    
+    if (error) {
+      console.error('Error fetching visitor count:', error.message);
+      return;
+    }
     
     if (count !== null) setVisitorCount(count);
   };
@@ -294,7 +299,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           <div className="flex items-center gap-4">
             
-            <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100 hidden xl:flex">
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
               <Users className="w-4 h-4" />
               <span className="text-xs font-bold uppercase tracking-wider tabular-nums">
                 {visitorCount} Visitors
