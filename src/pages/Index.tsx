@@ -8,7 +8,7 @@ import { FeaturedYachts } from '@/components/home/FeaturedYachts';
 import { MoreYachts } from '@/components/home/MoreYachts';
 import { CTASection } from '@/components/home/CTASection';
 import { SpecialOfferBadge } from '@/components/home/SpecialOfferBadge';
-
+import { FAQSection } from '@/components/home/FAQSection';
 import { SEO } from '@/components/SEO';
 
 const Index = () => {
@@ -42,6 +42,10 @@ const Index = () => {
 
       <motion.div {...fadeIn}>
         <MoreYachts />
+      </motion.div>
+      
+      <motion.div {...fadeIn}>
+        <FAQSection />
       </motion.div>
 
       <motion.div {...fadeIn}>
