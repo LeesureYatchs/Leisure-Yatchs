@@ -67,7 +67,7 @@ export default function ContactPage() {
     <PublicLayout>
       <SEO 
         title="Contact Us | Book Your Yacht in Dubai"
-        description="Get in touch with LeisureYacht team for bookings and enquiries. Visit us at Dubai Marina or call us 24/7 for luxury yacht charters."
+        description="Get in touch with LeisureYacht team for bookings and enquiries. Visit us at Vida marina yacht club Dubai or call us 24/7 for luxury yacht charters."
         url="/contact"
       />
       {/* Hero */}
@@ -184,7 +184,7 @@ export default function ContactPage() {
               <div>
                 <h2 className="text-2xl font-bold mb-6">Get in Touch</h2>
                 <p className="text-muted-foreground mb-8">
-                  Visit us at our Dubai Marina location or reach out through any of
+                  Visit us at our Vida marina yacht club Dubai location or reach out through any of
                   the channels below. Our team is ready to assist you.
                 </p>
               </div>
@@ -197,7 +197,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Our Location</h3>
                     <p className="text-muted-foreground">
-                      Dubai Marina, Pier 7<br />
+                      Vida marina yacht club<br />
                       Dubai, United Arab Emirates
                     </p>
                   </div>
